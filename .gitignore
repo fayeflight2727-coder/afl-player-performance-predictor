@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+
+# Data
+data/raw/*.csv
+data/processed/*.csv
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Models
+*.pkl
+*.joblib
+models/mlflow/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Notebooks
+.ipynb_checkpoints/
+*.ipynb
+!notebooks/archive/.gitkeep
+
+# Logs
+*.log
+mlruns/
