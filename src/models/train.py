@@ -85,7 +85,10 @@ def main():
         mlflow.log_metric("mse", mse)
         mlflow.log_metric("r2", r2)
 
-        mlflow.xgboost.log_model(model, "model")
+        mlflow.xgboost.log_model(
+            model,
+            "model",
+            registered_model_name="AFL_Goal_Predictor")
 
         joblib.dump(model, MODEL_PATH)
 
