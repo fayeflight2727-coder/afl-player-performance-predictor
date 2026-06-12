@@ -1,0 +1,45 @@
+name: CD Pipeline
+
+# Triggers on every push to main (i.e. when a PR is merged)
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to Docker Hub using secrets stored in GitHub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 3: Build the Docker image and tag it with the commit SHA
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/afl-prediction:latest \
+                       -t ${{ secrets.DOCKER_USERNAME }}/afl-prediction:${{ github.sha }} .
+
+      # Step 4: Push the image to Docker Hub
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/afl-prediction:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/afl-prediction:${{ github.sha }}
+
+      # Step 5: Smoke test - verify health endpoint on the built image
+      - name: Smoke test
+        run: |
+          docker run -d -p 8000:8000 --name afl_test \
+            -e MLFLOW_TRACKING_URI=http://localhost:5000 \
+            ${{ secrets.DOCKER_USERNAME }}/afl-prediction:latest
+          sleep 10
+          curl --fail http://localhost:8000/health
+          docker stop afl_test
