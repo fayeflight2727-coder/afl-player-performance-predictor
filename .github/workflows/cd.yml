@@ -1,6 +1,5 @@
 name: CD Pipeline
 
-# Triggers on every push to main (i.e. when a PR is merged)
 on:
   push:
     branches:
@@ -34,13 +33,23 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/afl-prediction:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/afl-prediction:${{ github.sha }}
 
-      # Step 5: Smoke test - verify health endpoint on the built image
-      # Sleep 30s to give the container enough time to fully start up
+      # Step 5: Smoke test - retry until API responds or timeout after 60s
       - name: Smoke test
         run: |
           docker run -d -p 8000:8000 --name afl_test \
             -e MLFLOW_TRACKING_URI=http://localhost:5000 \
             ${{ secrets.DOCKER_USERNAME }}/afl-prediction:latest
-          sleep 30
-          curl --fail http://localhost:8000/health || (docker logs afl_test && exit 1)
+          echo "Waiting for API to be ready..."
+          for i in $(seq 1 12); do
+            sleep 5
+            echo "Attempt $i..."
+            if curl --silent --fail http://localhost:8000/health; then
+              echo "API is up!"
+              docker stop afl_test
+              exit 0
+            fi
+          done
+          echo "API failed to start. Printing logs:"
+          docker logs afl_test
           docker stop afl_test
+          exit 1
