@@ -9,12 +9,6 @@ venv/
 .env
 .venv
 
-# Data
-data/raw/*.csv
-data/processed/*.csv
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-
 # Models
 *.pkl
 *.joblib
