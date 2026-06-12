@@ -14,11 +14,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
+# Copy source code only
 COPY src/ ./src/
-
-# Copy data (runtime artifacts)
-COPY data/ ./data/
 
 # Expose the port FastAPI will run on
 EXPOSE 8000
