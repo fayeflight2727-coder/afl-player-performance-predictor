@@ -33,3 +33,5 @@ models/mlflow/
 # Logs
 *.log
 mlruns/
+.DS_Store
+mlflow.db
