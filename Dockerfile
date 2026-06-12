@@ -17,9 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY src/ ./src/
 
-# Copy data and models (runtime artifacts)
+# Copy data (runtime artifacts)
 COPY data/ ./data/
-COPY models/ ./models/
 
 # Expose the port FastAPI will run on
 EXPOSE 8000
