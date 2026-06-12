@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
 
-DATA_PATH = "src/features/validate_for_training.py "
+DATA_PATH = "data/processed/afl_features_latest.csv"
 MODEL_DIR = "models"
 MODEL_PATH = "models/xgb_goal_model.pkl"
 
