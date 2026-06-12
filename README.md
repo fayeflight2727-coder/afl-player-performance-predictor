@@ -19,6 +19,13 @@ A production-grade machine learning system that predicts goal-scoring probabilit
 
 ---
 
+## Project Management
+
+- **Sprint Board:** [AFL Predictor — Sprint Board](https://github.com/users/TiaQiu1016/projects/1)
+- **Issues:** [All project issues](https://github.com/fayeflight2727-coder/afl-player-performance-predictor/issues)
+
+---
+
 ## Business Problem
 
 AFL teams make multi-million dollar decisions on player selection, recruitment, and in-game strategy — yet most decisions still rely on intuition rather than evidence. Our system gives coaching departments a data-backed decision-support tool: given a player's attributes and game context, how likely are they to score, and *why*?
