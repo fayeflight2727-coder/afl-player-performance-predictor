@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
 
-DATA_PATH = "data/processed/df_final_final.csv"
+DATA_PATH = "data/processed/afl_features_latest.csv"
 MODEL_DIR = "models"
 BEST_MODEL_PATH = "models/xgb_goal_model_optuna.pkl"
 
