@@ -3,7 +3,7 @@ AFL DATASET SUMMARY
 ============================================================
 
 Total rows: 127,116
-Total columns: 32
+Total columns: 45
 Years: 2012 - 2025
 
 Position distribution:

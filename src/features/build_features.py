@@ -190,6 +190,123 @@ class AFLDataPreprocessor:
         
         return df_merged
     
+    def add_lag_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add rolling averages for key performance metrics (Issue #7)"""
+        df = df.copy()
+        df = df.sort_values(['PlayerId', 'Year'])
+        
+        for metric in ['Disposals', 'Marks', 'Tackles', 'Clearances']:
+            if metric in df.columns:
+                df[f'{metric}_lag3'] = df.groupby('PlayerId')[metric].transform(
+                    lambda x: x.rolling(3, min_periods=1).mean().shift(1)
+                )
+                # Fill NaN with the player's overall average or 0
+                df[f'{metric}_lag3'] = df.groupby('PlayerId')[f'{metric}_lag3'].transform(
+                    lambda x: x.fillna(x.mean())
+                )
+                # If still NaN (player has no history), fill with 0
+                df[f'{metric}_lag3'] = df[f'{metric}_lag3'].fillna(0)
+        
+        return df
+
+    def add_causal_interactions(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Add causal interaction features based on H1-H3 findings.
+        From causal analysis: Height→Ruck, Weight→Midfield, BMI→Forward
+        """
+        df = df.copy()
+        
+        # Position indicator columns
+        df['is_ruck'] = (df['PrimaryPosition'] == 'Ruck').astype(int)
+        df['is_midfield'] = (df['PrimaryPosition'] == 'Midfield').astype(int)
+        df['is_forward'] = (df['PrimaryPosition'] == 'Forward').astype(int)
+        
+        # Causal interactions from H1, H2, H3
+        df['height_x_ruck'] = df['Height'] * df['is_ruck']
+        df['weight_x_midfield'] = df['Weight'] * df['is_midfield']
+        df['bmi_x_forward'] = df['BMI'] * df['is_forward']
+        
+        # Weather interactions (from your causal model)
+        df['height_x_rain'] = df['Height'] * df['IsRainy']
+        df['weight_x_rain'] = df['Weight'] * df['IsRainy']
+        df['bmi_x_rain'] = df['BMI'] * df['IsRainy']
+        
+        print("✓ Added causal interaction features:")
+        print("    - height_x_ruck (from H1: Height helps Rucks)")
+        print("    - weight_x_midfield (from H2: Weight helps Midfield)")
+        print("    - bmi_x_forward (from H3: BMI helps Forwards)")
+        print("    - Weather interactions (Height/Weight/BMI × IsRainy)")
+        
+        return df
+        
+    def validate_pipeline_output(self, df: pd.DataFrame) -> None:
+        """
+        Automatic validation that runs as part of the pipeline.
+        This is Issue #3 - integrated data validation.
+        """
+        print("\n" + "-"*40)
+        print("PIPELINE DATA VALIDATION (Issue #3)")
+        print("-"*40)
+        
+        # 1. Required columns check
+        required_cols = ['Height', 'Weight', 'BMI', 'Age', 'PrimaryPosition', 'Total_Score']
+        missing = [col for col in required_cols if col not in df.columns]
+        if missing:
+            print(f"❌ Missing required columns: {missing}")
+        else:
+            print("✓ All required columns present")
+        
+        # 2. Range checks
+        range_checks = [
+            ('Height', 150, 220),
+            ('Weight', 50, 130),
+            ('BMI', 15, 35),
+            ('Age', 18, 45)
+        ]
+        
+        all_ranges_ok = True
+        for col, min_val, max_val in range_checks:
+            if col in df.columns:
+                col_min = df[col].min()
+                col_max = df[col].max()
+                if col_min < min_val or col_max > max_val:
+                    print(f"⚠️ {col} range issue: {col_min}-{col_max} (expected {min_val}-{max_val})")
+                    all_ranges_ok = False
+                else:
+                    print(f"✓ {col} range OK: {col_min}-{col_max}")
+        
+        # 3. Null check
+        null_cols = df.columns[df.isnull().any()].tolist()
+        if null_cols:
+            print(f"❌ Null values in: {null_cols}")
+        else:
+            print("✓ No null values")
+        
+        # 4. Duplicate check
+        duplicates = df.duplicated().sum()
+        if duplicates > 0:
+            print(f"⚠️ {duplicates} duplicate rows found")
+        else:
+            print("✓ No duplicate rows")
+        
+        # 5. Position distribution
+        print(f"\n✓ Position distribution:")
+        for pos, count in df['PrimaryPosition'].value_counts().items():
+            print(f"    {pos}: {count:,} ({count/len(df)*100:.1f}%)")
+        
+        # 6. Target variable summary
+        print(f"\n✓ Target variable (Total_Score):")
+        print(f"    Mean: {df['Total_Score'].mean():.2f}")
+        print(f"    Median: {df['Total_Score'].median():.2f}")
+        print(f"    Zero values: {(df['Total_Score'] == 0).mean()*100:.1f}%")
+        
+        # Final status
+        if not missing and all_ranges_ok and not null_cols and duplicates == 0:
+            print("\n✅ All validation checks PASSED")
+        else:
+            print("\n⚠️ Validation issues found - see warnings above")
+
+
     # ========== POSITION-SPECIFIC SCALING PIPELINE ==========
     
     def get_position_scaling_pipeline(self, df: pd.DataFrame, position_filter: str, target_col: str, 
@@ -258,7 +375,13 @@ class AFLDataPreprocessor:
         
         # Merge
         df_final = self.merge_datasets(df_stats_processed, df_player_processed, df_game_processed)
-        
+        # Add lag features
+        df_final = self.add_lag_features(df_final)
+        # Add causal interaction features
+        df_final = self.add_causal_interactions(df_final) 
+        # Integrated data validation
+        self.validate_pipeline_output(df_final)  # This prints results, no variable needed
+
         if save_output:
             # 1. Save main feature file
             output_file = os.path.join(self.processed_path, "afl_features_latest.csv")
@@ -307,8 +430,6 @@ class AFLDataPreprocessor:
                 f.write("Position distribution:\n")
                 for pos, count in df_final['PrimaryPosition'].value_counts().items():
                     f.write(f"  - {pos}: {count:,} ({count/len(df_final)*100:.1f}%)\n")
-        
-        return df_final
 
 # ========== ENTRY POINTS ==========
 

@@ -1,6 +1,6 @@
 {
   "total_rows": 127116,
-  "total_columns": 32,
+  "total_columns": 45,
   "years_covered": "2012 - 2025",
   "unique_players": 1818,
   "unique_games": 2840,
@@ -36,7 +36,20 @@
     "TempRange": 0,
     "IsRainy": 0,
     "Age": 0,
-    "Total_Score": 0
+    "Total_Score": 0,
+    "Disposals_lag3": 0,
+    "Marks_lag3": 0,
+    "Tackles_lag3": 0,
+    "Clearances_lag3": 0,
+    "is_ruck": 0,
+    "is_midfield": 0,
+    "is_forward": 0,
+    "height_x_ruck": 0,
+    "weight_x_midfield": 0,
+    "bmi_x_forward": 0,
+    "height_x_rain": 0,
+    "weight_x_rain": 0,
+    "bmi_x_rain": 0
   },
   "duplicate_rows": 0,
   "position_distribution": {

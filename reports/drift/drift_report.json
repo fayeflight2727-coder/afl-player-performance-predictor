@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-06-12T20:15:42.268023",
+  "train_period": {
+    "start": 2012,
+    "end": 2022,
+    "rows": 98280
+  },
+  "current_period": {
+    "start": 2023,
+    "end": 2025,
+    "rows": 28836
+  },
+  "drift_results": {
+    "Height": {
+      "psi": 0.0071,
+      "drift_detected": 

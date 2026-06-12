@@ -31,3 +31,16 @@ TempRange,float64,0,0.0,479
 IsRainy,int64,0,0.0,2
 Age,Int64,0,0.0,22
 Total_Score,int64,0,0.0,65
+Disposals_lag3,float64,0,0.0,1750
+Marks_lag3,float64,0,0.0,1606
+Tackles_lag3,float64,0,0.0,1576
+Clearances_lag3,float64,0,0.0,1473
+is_ruck,int64,0,0.0,2
+is_midfield,int64,0,0.0,2
+is_forward,int64,0,0.0,2
+height_x_ruck,int64,0,0.0,19
+weight_x_midfield,int64,0,0.0,35
+bmi_x_forward,float64,0,0.0,325
+height_x_rain,int64,0,0.0,43
+weight_x_rain,int64,0,0.0,53
+bmi_x_rain,float64,0,0.0,610
