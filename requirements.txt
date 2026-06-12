@@ -1,3 +1,12 @@
+fastapi
+uvicorn
+mlflow
+xgboost
 pandas
 numpy
 scikit-learn
+optuna
+joblib
+pydantic
+httpx
+shap
