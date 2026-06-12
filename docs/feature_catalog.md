@@ -101,7 +101,7 @@ These are per-game statistics from `stats.csv`. The following columns were **exp
 | `MarksInside50` | Continuous | Marks inside the 50m arc — **top Forward predictor** (Course 1 coeff: +9.75) |
 | `OnePercenters` | Continuous | Spoils, shepherds, smothers |
 | `GoalAssists` | Continuous | Goals assisted |
-| `%Played` | Continuous | Percentage of match played |
+| `%Played` | Continuous | Percentage of match played. **API field name:** `Percent_Played` (renamed from `%Played` for JSON/Pydantic compatibility) |
 
 ---
 
