@@ -62,6 +62,72 @@ def ready():
     )
 
 
+@app.post("/predict", response_model=PredictionO
+cat > src/api/main.py << 'EOF'
+import pandas as pd
+import numpy as np
+from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
+
+from src.api.schemas import (
+    PlayerInput,
+    PredictionOutput,
+    HealthResponse,
+    ReadyResponse
+)
+from src.api.dependencies import (
+    load_model,
+    get_model,
+    get_model_version,
+    is_model_loaded
+)
+
+
+class ModelWrapper:
+    """
+    Wraps the loaded model to ensure predict() always returns a numpy float array.
+    Handles XGBoost version mismatches where predict() returns strings.
+    """
+    def __init__(self, model):
+        self.model = model
+
+    def predict(self, X):
+        raw = self.model.predict(X)
+        if isinstance(raw, str):
+            raw = raw.strip("[]").split()
+        return np.array(raw, dtype=float)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting AFL Prediction API...")
+    load_model()
+    yield
+    print("Shutting down AFL Prediction API...")
+
+
+app = FastAPI(
+    title="AFL Goal Prediction API",
+    description="Predicts AFL player goal-scoring output using a trained XGBoost model.",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+
+@app.get("/health", response_model=HealthResponse)
+def health():
+    return HealthResponse(status="ok")
+
+
+@app.get("/ready", response_model=ReadyResponse)
+def ready():
+    loaded = is_model_loaded()
+    return ReadyResponse(
+        status="ready" if loaded else "not ready",
+        model_loaded=loaded
+    )
+
+
 @app.post("/predict", response_model=PredictionOutput)
 def predict(player: PlayerInput):
     if not is_model_loaded():
@@ -123,12 +189,24 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
 
 @app.get("/monitoring/drift")
 def monitoring_drift():
+    """
+    Returns PSI drift scores for 9 key features.
+    Compares training period (2012-2022) vs current period (2023-2025).
+    Uses Member B's check_data_drift() from src/monitoring/drift.py.
+    """
     try:
         from src.monitoring.drift import check_data_drift
+
         reference = pd.read_csv("data/processed/afl_features_latest.csv")
-        current = reference[reference["Year"] >= 2023]
         reference_train = reference[reference["Year"] <= 2022]
-        result = check_data_drift(reference_train, current)
+        current = reference[reference["Year"] >= 2023]
+
+        drift_features = [
+            'Height', 'Weight', 'BMI', 'Age', 'Disposals',
+            'Clearances', 'Marks', 'Tackles', 'Inside50s'
+        ]
+
+        result = check_data_drift(reference_train, current, drift_features)
         return result
     except Exception as e:
         raise HTTPException(
