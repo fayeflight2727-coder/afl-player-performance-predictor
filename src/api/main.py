@@ -91,10 +91,26 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
     try:
         wrapped = ModelWrapper(get_model())
         from src.visualization.explainability import generate_explanation_dict
+
+        # Load background sample from training data so SHAP has a baseline to compare against.
+        # Using the input row as its own background causes all SHAP values to be 0.0.
+        background_df = pd.read_csv("data/processed/afl_features_latest.csv")
+        background_df = background_df[background_df["Year"] <= 2022]
+
+        # Keep only the 24 features the model was trained on
+        model_features = [
+            "Year", "Disposals", "Marks", "Behinds", "HitOuts", "Tackles",
+            "Rebounds", "Inside50s", "Clearances", "Clangers", "Frees",
+            "FreesAgainst", "ContestedMarks", "MarksInside50", "OnePercenters",
+            "GoalAssists", "%Played", "Height", "Weight", "BMI",
+            "AvgTemp", "TempRange", "IsRainy", "Age"
+        ]
+        background_sample = background_df[model_features].dropna().sample(50, random_state=42)
+
         explanation = generate_explanation_dict(
             model=wrapped,
             X_instance=input_df,
-            X_background=input_df,
+            X_background=background_sample,
             position=position,
             player_id="api_request",
             top_n=10
