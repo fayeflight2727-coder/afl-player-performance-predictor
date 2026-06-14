@@ -189,19 +189,26 @@ Request body is identical to `POST /predict` (see schema above).
   "player_id": "api_request",
   "position": "Forward",
   "target": "Total_Score",
-  "baseline": 2.1389,
+  "baseline": 0.4281,
   "prediction": 2.1389,
   "top_features": [
-    {"feature": "Year",       "value": 2025.0, "shap_value": 0.0, "direction": "negative"},
-    {"feature": "Disposals",  "value": 22.0,   "shap_value": 0.0, "direction": "negative"},
-    {"feature": "Marks",      "value": 6.0,    "shap_value": 0.0, "direction": "negative"},
-    {"feature": "Behinds",    "value": 1.0,    "shap_value": 0.0, "direction": "negative"},
-    {"feature": "HitOuts",    "value": 0.0,    "shap_value": 0.0, "direction": "negative"}
+    {"feature": "MarksInside50",  "value": 3.0,  "shap_value":  1.7470, "direction": "positive"},
+    {"feature": "Behinds",        "value": 1.0,  "shap_value": -0.0856, "direction": "negative"},
+    {"feature": "Marks",          "value": 6.0,  "shap_value": -0.0788, "direction": "negative"},
+    {"feature": "GoalAssists",    "value": 1.0,  "shap_value": -0.0597, "direction": "negative"},
+    {"feature": "Disposals",      "value": 22.0, "shap_value":  0.0494, "direction": "positive"},
+    {"feature": "Inside50s",      "value": 5.0,  "shap_value":  0.0370, "direction": "positive"},
+    {"feature": "%Played",        "value": 85.0, "shap_value":  0.0350, "direction": "positive"},
+    {"feature": "Frees",          "value": 1.0,  "shap_value":  0.0315, "direction": "positive"},
+    {"feature": "ContestedMarks", "value": 1.0,  "shap_value":  0.0178, "direction": "positive"},
+    {"feature": "AvgTemp",        "value": 18.5, "shap_value":  0.0171, "direction": "positive"}
   ]
 }
 ```
 
-**Known issue:** SHAP values are currently `0.0` because the endpoint uses the prediction row as its own background dataset (`X_background=input_df`). SHAP requires a separate reference sample from training data to compute meaningful attributions. Fix pending in `src/api/main.py` — background should be a sample of ~50 rows from `data/processed/afl_features_latest.csv`.
+**How to read this:** `baseline` (0.4281) is the average goals across the training set. Each `shap_value` shows how much that feature pushes the prediction above or below baseline. Here `MarksInside50=3` adds +1.747 goals — the dominant driver for this Forward, consistent with Course 1 findings (coefficient +9.75). `baseline + sum(shap_values) ≈ prediction`.
+
+**Background dataset:** Uses 50 randomly sampled rows from training data (Year ≤ 2022) as the SHAP reference population.
 
 **Implemented in:** `src/visualization/explainability.py` → `generate_explanation_dict()`
 
