@@ -66,8 +66,7 @@ def predict(player: PlayerInput):
             detail="Model is not loaded. Try again shortly or check /ready."
         )
     input_dict = player.dict()
-    input_dict["%Played"] = input_dict.pop("Percent_Played")
-    input_df = pd.DataFrame([input_dict])
+    input_df = pd.DataFrame([input_dict]).rename(columns={"Percent_Played": "%Played"})
     try:
         wrapped = ModelWrapper(get_model())
         prediction = wrapped.predict(input_df)
@@ -88,8 +87,7 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
             detail="Model is not loaded. Try again shortly or check /ready."
         )
     input_dict = player.dict()
-    input_dict["%Played"] = input_dict.pop("Percent_Played")
-    input_df = pd.DataFrame([input_dict])
+    input_df = pd.DataFrame([input_dict]).rename(columns={"Percent_Played": "%Played"})
     try:
         wrapped = ModelWrapper(get_model())
         from src.visualization.explainability import generate_explanation_dict
