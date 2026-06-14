@@ -167,19 +167,69 @@ Planned to accept an array of `PlayerInput` objects and return predictions for a
 
 ---
 
-### GET /explain/{player_id}
+### POST /predict/explain
 
-**Status:** Not yet implemented (returns `501 Not Implemented`)
+Returns a SHAP-based explanation for a single player prediction. Accepts the same 24-feature body as `/predict`, plus an optional `position` query parameter.
 
-Planned to return SHAP-based feature importance for a specific prediction. Will use `src/visualization/explainability.py`.
+**Request**
+```
+POST /predict/explain?position=Forward
+Content-Type: application/json
+```
+
+| Query param | Type | Default | Values |
+|-------------|------|---------|--------|
+| `position` | string | `"Forward"` | `Forward`, `Midfield`, `Ruck`, `Defender` |
+
+Request body is identical to `POST /predict` (see schema above).
+
+**Example response** `200 OK`
+```json
+{
+  "player_id": "api_request",
+  "position": "Forward",
+  "target": "Total_Score",
+  "baseline": 0.51,
+  "prediction": 2.14,
+  "top_features": [
+    {"feature": "MarksInside50", "value": 3.0, "shap_value": 0.82, "direction": "positive"},
+    {"feature": "GoalAssists",   "value": 1.0, "shap_value": 0.44, "direction": "positive"},
+    {"feature": "Behinds",       "value": 1.0, "shap_value": 0.31, "direction": "positive"},
+    {"feature": "Disposals",     "value": 22.0,"shap_value": 0.28, "direction": "positive"},
+    {"feature": "HitOuts",       "value": 0.0, "shap_value": -0.12,"direction": "negative"}
+  ]
+}
+```
+
+**Implemented in:** `src/visualization/explainability.py` → `generate_explanation_dict()`
 
 ---
 
 ### GET /monitoring/drift
 
-**Status:** Not yet implemented (returns `501 Not Implemented`)
+Returns PSI and drift detection results for 9 key features, comparing the training period (≤2022) against the current period (2023–2025).
 
-Planned to return PSI / KS drift scores for key features. Will use `src/monitoring/drift.py`.
+**Request**
+```
+GET /monitoring/drift
+```
+
+**Example response** `200 OK`
+```json
+{
+  "timestamp": "2026-06-14T19:41:55",
+  "drift_results": {
+    "Weight": {"psi": 0.148, "drift_detected": true,  "severity": "moderate"},
+    "BMI":    {"psi": 0.091, "drift_detected": false,  "severity": "low"},
+    "Height": {"psi": 0.012, "drift_detected": false,  "severity": "low"},
+    "Age":    {"psi": 0.034, "drift_detected": false,  "severity": "low"}
+  }
+}
+```
+
+Features monitored: `Height`, `Weight`, `BMI`, `Age`, `Disposals`, `Clearances`, `Marks`, `Tackles`, `Inside50s`
+
+**Implemented in:** `src/monitoring/drift.py` → `check_data_drift()`
 
 ---
 

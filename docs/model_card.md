@@ -57,8 +57,8 @@ Decision support for AFL coaching departments:
 | Property | Detail |
 |----------|--------|
 | Source | Kaggle AFL Stats Dataset (`players.csv`, `stats.csv`) |
-| Coverage | 2012–2025 (full dataset); 127,116 player-game observations; 1,818 unique players; 2,840 unique games |
-| Train / test split | Chronological 80/20 split (`shuffle=False`); test set covers approximately 2018–2025 (25,424 rows) |
+| Coverage | 2020–2025 (model v2 retrained on recent data); full processed dataset contains 127,116 rows (2012–2025) |
+| Train / test split | Chronological 80/20 split (`shuffle=False`) on 2020–2025 subset |
 | Preprocessing | Feature pipeline via `src/features/build_features.py`; missing values filled with 0 |
 | Data leakage controls | No future statistics used; chronological split prevents look-ahead bias |
 
