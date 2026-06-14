@@ -9,11 +9,6 @@ venv/
 .env
 .venv
 
-# Models
-*.pkl
-*.joblib
-models/mlflow/
-
 # IDE
 .vscode/
 .idea/
