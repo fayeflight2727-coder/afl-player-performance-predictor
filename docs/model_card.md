@@ -2,8 +2,8 @@
 
 **Version:** 2.0 (Production)
 **Owner:** Tia Qiu (ML Analyst/PM)
-**Last Updated:** 2026-06-12
-**Status:** In development (Phase 3 — training in progress)
+**Last Updated:** 2026-06-14
+**Status:** Deployed — Phase 5 (API live, SHAP endpoint in progress)
 
 ---
 
@@ -13,16 +13,26 @@
 A set of four position-specific regression models that predict player performance outcomes in AFL matches. Models are trained using a combination of physical attributes, game context, causal interaction features, and rolling performance statistics.
 
 ### Model Architecture
-| Position | Target | Algorithm | Hyperparameter Tuning |
-|----------|--------|-----------|----------------------|
-| Forward | TotalScore | LassoCV (primary) / XGBoost | Optuna / Hyperopt |
-| Midfield | Clearances | LassoCV (primary) / XGBoost | Optuna / Hyperopt |
-| Ruck | HitOuts | LassoCV (primary) / XGBoost | Optuna / Hyperopt |
-| Defender | Rebounds | LassoCV (primary) / XGBoost | Optuna / Hyperopt |
 
-**Explainability:** SHAP (SHapley Additive exPlanations) applied to all models. See `src/visualization/explainability.py`.
+| Property | Detail |
+|----------|--------|
+| Algorithm | XGBRegressor (XGBoost gradient boosting) |
+| Target | `Goals` — goals scored per player per game |
+| Input features | 24 features (see Feature Inputs section below) |
+| Hyperparameters | `n_estimators=300`, `max_depth=5`, `learning_rate=0.05`, `random_state=42` |
+| Model file | `models/xgb_goal_model.pkl` |
 
-**Experiment tracking:** All runs logged to MLflow. Model registry manages staging → production promotion.
+**Note on architecture:** The production model is a single regression model predicting `Goals` for all positions. Position-specific routing (Forward→TotalScore, Midfield→Clearances, etc.) from the original Course 1 design was not carried into this production build. The model implicitly learns position differences from the input statistics (e.g. high `HitOuts` indicates a Ruck; high `MarksInside50` indicates a Forward).
+
+**Explainability:** SHAP TreeExplainer applied via `src/visualization/explainability.py`.
+
+**Experiment tracking:** Runs logged to MLflow experiment `AFL_Goal_Prediction`. Model registered as `AFL_Goal_Predictor`.
+
+### Feature Inputs (24 features)
+
+`Year`, `Disposals`, `Marks`, `Behinds`, `HitOuts`, `Tackles`, `Rebounds`, `Inside50s`, `Clearances`, `Clangers`, `Frees`, `FreesAgainst`, `ContestedMarks`, `MarksInside50`, `OnePercenters`, `GoalAssists`, `%Played`, `Height`, `Weight`, `BMI`, `AvgTemp`, `TempRange`, `IsRainy`, `Age`
+
+See `docs/feature_catalog.md` for definitions. `Goals` itself is excluded (target variable). `PrimaryPosition` is excluded (not yet used as a feature).
 
 ---
 
@@ -47,28 +57,41 @@ Decision support for AFL coaching departments:
 | Property | Detail |
 |----------|--------|
 | Source | Kaggle AFL Stats Dataset (`players.csv`, `stats.csv`) |
-| Coverage | 2012–2022 (training), 2023–2024 (validation) |
-| Records | ~50,000+ player-game observations |
-| Preprocessing | Outlier removal (3.0× IQR on training data only), time-based split |
-| Data leakage controls | No future statistics used; lag features computed from past games only; `TimeSeriesSplit` for CV |
+| Coverage | 2012–2025 (full dataset); 127,116 player-game observations; 1,818 unique players; 2,840 unique games |
+| Train / test split | Chronological 80/20 split (`shuffle=False`); test set covers approximately 2018–2025 (25,424 rows) |
+| Preprocessing | Feature pipeline via `src/features/build_features.py`; missing values filled with 0 |
+| Data leakage controls | No future statistics used; chronological split prevents look-ahead bias |
 
 ---
 
 ## Evaluation Results
 
-### Test Set Performance (2025 season)
+### Test Set Performance
 
-| Position | Target | R² | MAE | RMSE |
-|----------|--------|-----|-----|------|
-| Forward | TotalScore | **0.49** | 4.37 | 5.72 |
-| Midfield | Clearances | **0.52** | 1.42 | 1.88 |
-| Ruck | HitOuts | TBD | TBD | TBD |
-| Defender | Rebounds | TBD | TBD | TBD |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **R²** | **0.4890** | Model explains ~49% of variance in goals scored |
+| **MAE** | **0.4293 goals** | Average prediction error under half a goal |
+| **RMSE** | **0.6262 goals** | |
+| Mean actual goals | 0.51 | Low baseline — most players score 0 or 1 goals per game |
 
-*Ruck and Defender results to be updated after Phase 3 completion.*
+*Evaluated on chronological 20% holdout (≈2018–2025, n=25,424). Metrics computed 2026-06-14 from `models/xgb_goal_model.pkl`.*
+
+### Prediction Range by Position Profile
+
+Based on API testing with representative player profiles:
+
+| Position | Sample Input Profile | Predicted Goals |
+|----------|---------------------|-----------------|
+| Forward | 22 disposals, 3 MarksInside50, 85% played | 2.14 |
+| Midfield | 28 disposals, 8 clearances, 100% played | 0.53 |
+| Ruck | 18 disposals, 35 hitouts, 100% played | 0.22 |
+| Defender | 20 disposals, 8 rebounds, 100% played | 0.05 |
+
+The model correctly assigns higher goal predictions to Forwards and near-zero predictions to Defenders without explicit position routing.
 
 ### Baseline Comparison
-Models compared against OLS/Lasso baseline and Random Forest. LassoCV selected as primary for interpretability. XGBoost retained for SHAP analysis.
+XGBRegressor outperforms a naive mean baseline (R²=0) and is retained over LassoCV for SHAP compatibility. Full ablation study not yet completed.
 
 ---
 
