@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 
@@ -14,14 +15,8 @@ from src.api.dependencies import (
     get_model_version,
     is_model_loaded
 )
-from src.visualization.explainability import generate_explanation_dict
 
 
-# ---------------------------------------------------------------------------
-# APP STARTUP
-# Loads the XGBoost model from MLflow (or local fallback) when the API starts.
-# Runs once before the API begins accepting requests.
-# ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting AFL Prediction API...")
@@ -38,23 +33,11 @@ app = FastAPI(
 )
 
 
-# ---------------------------------------------------------------------------
-# GET /health
-# Confirms the API server is running.
-# Does not check whether the model is loaded - just confirms the app is alive.
-# Used by Docker and CI/CD pipelines to verify the container started correctly.
-# ---------------------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse)
 def health():
     return HealthResponse(status="ok")
 
 
-# ---------------------------------------------------------------------------
-# GET /ready
-# Confirms the API is ready to serve predictions.
-# Returns model_loaded=True only if the XGBoost model was successfully loaded.
-# Used by CI/CD smoke tests after deployment to verify full readiness.
-# ---------------------------------------------------------------------------
 @app.get("/ready", response_model=ReadyResponse)
 def ready():
     loaded = is_model_loaded()
@@ -64,31 +47,18 @@ def ready():
     )
 
 
-# ---------------------------------------------------------------------------
-# POST /predict
-# Accepts 24 player features and returns predicted goal output.
-# Input is validated automatically by Pydantic via the PlayerInput schema.
-# Percent_Played is remapped to %Played to match the model's training feature names.
-# Returns predicted_goals (float) and the model version that produced the result.
-# ---------------------------------------------------------------------------
 @app.post("/predict", response_model=PredictionOutput)
 def predict(player: PlayerInput):
-
     if not is_model_loaded():
         raise HTTPException(
             status_code=503,
             detail="Model is not loaded. Try again shortly or check /ready."
         )
 
-    # Convert input to DataFrame
     input_dict = player.dict()
-
-    # Remap Percent_Played back to %Played to match training feature names
     input_dict["%Played"] = input_dict.pop("Percent_Played")
-
     input_df = pd.DataFrame([input_dict])
 
-    # Run prediction
     try:
         prediction = get_model().predict(input_df)
         predicted_goals = float(prediction[0])
@@ -104,15 +74,8 @@ def predict(player: PlayerInput):
     )
 
 
-# ---------------------------------------------------------------------------
-# POST /predict/explain
-# Returns prediction plus SHAP feature importance breakdown.
-# Uses Member D's generate_explanation_dict() from explainability.py.
-# Requires position parameter to select the correct explanation target.
-# ---------------------------------------------------------------------------
 @app.post("/predict/explain")
 def predict_explain(player: PlayerInput, position: str = "Forward"):
-
     if not is_model_loaded():
         raise HTTPException(
             status_code=503,
@@ -124,8 +87,17 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
     input_df = pd.DataFrame([input_dict])
 
     try:
+        model = get_model()
+        if hasattr(model, "_model_impl"):
+            raw_model = model._model_impl
+        elif hasattr(model, "unwrap_python_model"):
+            raw_model = model.unwrap_python_model()
+        else:
+            raw_model = model
+
+        from src.visualization.explainability import generate_explanation_dict
         explanation = generate_explanation_dict(
-            model=get_model(),
+            model=raw_model,
             X_instance=input_df,
             X_background=input_df,
             position=position,
@@ -140,15 +112,17 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
         )
 
 
-# ---------------------------------------------------------------------------
-# GET /monitoring/drift
-# Placeholder endpoint for feature drift monitoring.
-# Will be implemented once drift.py is finalised by Member B.
-# Returns PSI scores for key features: Height, Weight, BMI, Age, Disposals, Clearances.
-# ---------------------------------------------------------------------------
 @app.get("/monitoring/drift")
 def monitoring_drift():
-    raise HTTPException(
-        status_code=501,
-        detail="Not implemented yet. Waiting on drift.py."
-    )
+    try:
+        from src.monitoring.drift import check_data_drift
+        reference = pd.read_csv("data/processed/afl_features_latest.csv")
+        current = reference[reference["Year"] >= 2023]
+        reference_train = reference[reference["Year"] <= 2022]
+        result = check_data_drift(reference_train, current)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Drift check failed: {str(e)}"
+        )
