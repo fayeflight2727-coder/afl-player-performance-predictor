@@ -81,11 +81,10 @@ def predict(player: PlayerInput):
 
     # Convert input to DataFrame
     input_dict = player.dict()
-
-    # Remap Percent_Played back to %Played to match training feature names
-    input_dict["%Played"] = input_dict.pop("Percent_Played")
-
     input_df = pd.DataFrame([input_dict])
+
+    # Remap Percent_Played → %Played using rename() to preserve column order
+    input_df = input_df.rename(columns={"Percent_Played": "%Played"})
 
     # Run prediction
     try:
