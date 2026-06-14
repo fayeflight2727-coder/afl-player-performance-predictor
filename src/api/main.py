@@ -17,6 +17,21 @@ from src.api.dependencies import (
 )
 
 
+class ModelWrapper:
+    """
+    Wraps the loaded model to ensure predict() always returns a numpy float array.
+    Handles XGBoost version mismatches where predict() returns strings.
+    """
+    def __init__(self, model):
+        self.model = model
+
+    def predict(self, X):
+        raw = self.model.predict(X)
+        if isinstance(raw, str):
+            raw = raw.strip("[]").split()
+        return np.array(raw, dtype=float)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting AFL Prediction API...")
@@ -60,7 +75,8 @@ def predict(player: PlayerInput):
     input_df = pd.DataFrame([input_dict])
 
     try:
-        prediction = get_model().predict(input_df)
+        wrapped = ModelWrapper(get_model())
+        prediction = wrapped.predict(input_df)
         predicted_goals = float(prediction[0])
     except Exception as e:
         raise HTTPException(
@@ -87,17 +103,10 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
     input_df = pd.DataFrame([input_dict])
 
     try:
-        model = get_model()
-        if hasattr(model, "_model_impl"):
-            raw_model = model._model_impl
-        elif hasattr(model, "unwrap_python_model"):
-            raw_model = model.unwrap_python_model()
-        else:
-            raw_model = model
-
+        wrapped = ModelWrapper(get_model())
         from src.visualization.explainability import generate_explanation_dict
         explanation = generate_explanation_dict(
-            model=raw_model,
+            model=wrapped,
             X_instance=input_df,
             X_background=input_df,
             position=position,
