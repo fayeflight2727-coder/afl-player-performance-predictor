@@ -14,6 +14,7 @@ from src.api.dependencies import (
     get_model_version,
     is_model_loaded
 )
+from src.visualization.explainability import generate_explanation_dict
 
 
 # ---------------------------------------------------------------------------
@@ -81,10 +82,11 @@ def predict(player: PlayerInput):
 
     # Convert input to DataFrame
     input_dict = player.dict()
-    input_df = pd.DataFrame([input_dict])
 
-    # Remap Percent_Played → %Played using rename() to preserve column order
-    input_df = input_df.rename(columns={"Percent_Played": "%Played"})
+    # Remap Percent_Played back to %Played to match training feature names
+    input_dict["%Played"] = input_dict.pop("Percent_Played")
+
+    input_df = pd.DataFrame([input_dict])
 
     # Run prediction
     try:
@@ -104,22 +106,44 @@ def predict(player: PlayerInput):
 
 # ---------------------------------------------------------------------------
 # POST /predict/explain
-# Placeholder endpoint for SHAP-based prediction explanations.
-# Will be implemented once src/visualization/explainability.py is ready.
-# Returns the same prediction as /predict plus a feature importance breakdown.
+# Returns prediction plus SHAP feature importance breakdown.
+# Uses Member D's generate_explanation_dict() from explainability.py.
+# Requires position parameter to select the correct explanation target.
 # ---------------------------------------------------------------------------
 @app.post("/predict/explain")
-def predict_explain(player: PlayerInput):
-    raise HTTPException(
-        status_code=501,
-        detail="Not implemented yet. Waiting on explainability.py."
-    )
+def predict_explain(player: PlayerInput, position: str = "Forward"):
+
+    if not is_model_loaded():
+        raise HTTPException(
+            status_code=503,
+            detail="Model is not loaded. Try again shortly or check /ready."
+        )
+
+    input_dict = player.dict()
+    input_dict["%Played"] = input_dict.pop("Percent_Played")
+    input_df = pd.DataFrame([input_dict])
+
+    try:
+        explanation = generate_explanation_dict(
+            model=get_model(),
+            X_instance=input_df,
+            X_background=input_df,
+            position=position,
+            player_id="api_request",
+            top_n=10
+        )
+        return explanation
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Explanation failed: {str(e)}"
+        )
 
 
 # ---------------------------------------------------------------------------
 # GET /monitoring/drift
 # Placeholder endpoint for feature drift monitoring.
-# Will be implemented once drift.py is finalised.
+# Will be implemented once drift.py is finalised by Member B.
 # Returns PSI scores for key features: Height, Weight, BMI, Age, Disposals, Clearances.
 # ---------------------------------------------------------------------------
 @app.get("/monitoring/drift")
