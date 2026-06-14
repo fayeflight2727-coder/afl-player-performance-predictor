@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-12T20:15:42.268023",
+  "timestamp": "2026-06-14T19:41:55.317242",
   "train_period": {
     "start": 2012,
     "end": 2022,
@@ -12,5 +12,128 @@
   },
   "drift_results": {
     "Height": {
-      "psi": 0.0071,
-      "drift_detected": 
+      "psi": 0.012143263249031692,
+      "drift_detected": false,
+      "severity": "low",
+      "reference_mean": 187.77354497354497,
+      "current_mean": 187.72423359689276,
+      "reference_std": 7.293912538784329,
+      "current_std": 7.556485185434757,
+      "reference_min": 168.0,
+      "current_min": 168.0,
+      "reference_max": 211.0,
+      "current_max": 211.0
+    },
+    "Weight": {
+      "psi": 0.1484533986660173,
+      "drift_detected": true,
+      "severity": "moderate",
+      "reference_mean": 87.30432437932438,
+      "current_mean": 84.41233180746289,
+      "reference_std": 8.379043719192293,
+      "current_std": 8.825855971233453,
+      "reference_min": 64.0,
+      "current_min": 63.0,
+      "reference_max": 118.0,
+      "current_max": 113.0
+    },
+    "BMI": {
+      "psi": 0.3271630445318438,
+      "drift_detected": true,
+      "severity": "high",
+      "reference_mean": 24.71778691799336,
+      "current_mean": 23.91448225671414,
+      "reference_std": 1.2445491293871178,
+      "current_std": 1.5452051502548134,
+      "reference_min": 18.19657904313989,
+      "current_min": 18.31637830746764,
+      "reference_max": 30.12759924385633,
+      "current_max": 28.274684359340444
+    },
+    "Age": {
+      "psi": 0.0304154810544104,
+      "drift_detected": false,
+      "severity": "low",
+      "reference_mean": 25.17983312983313,
+      "current_mean": 25.79477042585657,
+      "reference_std": 3.730362541812668,
+      "current_std": 3.9827510399436363,
+      "reference_min": 19.0,
+      "current_min": 19.0,
+      "reference_max": 40.0,
+      "current_max": 37.0
+    },
+    "Disposals": {
+      "psi": 0.014390957171555923,
+      "drift_detected": false,
+      "severity": "low",
+      "reference_mean": 16.300518925518926,
+      "current_mean": 15.548446386461368,
+      "reference_std": 7.278192887853981,
+      "current_std": 7.343813021406069,
+      "reference_min": 0.0,
+      "current_min": 0.0,
+      "reference_max": 54.0,
+      "current_max": 54.0
+    },
+    "Clearances": {
+      "psi": 0.002490833070171336,
+      "drift_detected": false,
+      "severity": "low",
+      "reference_mean": 1.6551689051689051,
+      "current_mean": 1.6218615619364682,
+      "reference_std": 2.2145770678162595,
+      "current_std": 2.2587722866038877,
+      "reference_min": 0.0,
+      "current_min": 0.0,
+      "reference_max": 19.0,
+      "current_max": 20.0
+    },
+    "Marks": {
+      "psi": 0.002990709597121315,
+      "drift_detected": false,
+      "severity": "low",
+      "reference_mean": 4.01025641025641,
+      "current_mean": 3.9369538077403248,
+      "reference_std": 2.5486987860512955,
+      "current_std": 2.5924398312719146,
+      "reference_min": 0.0,
+      "current_min": 0.0,
+      "reference_max": 21.0,
+      "current_max": 20.0
+    },
+    "Tackles": {
+      "psi": 0.01206386816030972,
+      "drift_detected": false,
+      "severity": "low",
+      "reference_mean": 2.8393874643874644,
+      "current_mean": 2.631398252184769,
+      "reference_std": 2.2619999073483803,
+      "current_std": 2.243245839012256,
+      "reference_min": 0.0,
+      "current_min": 0.0,
+      "reference_max": 20.0,
+      "current_max": 18.0
+    },
+    "Inside50s": {
+      "psi": 0.0009667061089519953,
+      "drift_detected": false,
+      "severity": "low",
+      "reference_mean": 2.2892348392348394,
+      "current_mean": 2.2669926480787903,
+      "reference_std": 1.922835299427691,
+      "current_std": 1.9626437727025956,
+      "reference_min": 0.0,
+      "current_min": 0.0,
+      "reference_max": 16.0,
+      "current_max": 15.0
+    }
+  },
+  "summary": {
+    "total_features_checked": 9,
+    "features_with_drift": 2,
+    "high_severity": 1,
+    "moderate_severity": 1,
+    "low_severity": 7
+  }
+}
