@@ -3,14 +3,14 @@
 **Version:** 2.0 (Production)
 **Owner:** Tia Qiu (ML Analyst/PM)
 **Last Updated:** 2026-06-14
-**Status:** Deployed — Phase 5 (API live, SHAP endpoint in progress)
+**Status:** Deployed — Phase 5 (API live, SHAP explainability endpoint live)
 
 ---
 
 ## Model Details
 
 ### Overview
-A set of four position-specific regression models that predict player performance outcomes in AFL matches. Models are trained using a combination of physical attributes, game context, causal interaction features, and rolling performance statistics.
+A single XGBoost regression model that predicts goals scored per player per game. Trained on physical attributes, game context, and in-game statistics. The model implicitly handles position differences through the statistics themselves (e.g. high HitOuts signals a Ruck; high MarksInside50 signals a Forward).
 
 ### Model Architecture
 
@@ -97,17 +97,18 @@ XGBRegressor outperforms a naive mean baseline (R²=0) and is retained over Lass
 
 ## Key Feature Importances
 
-### Forward Position
-1. `MarksInside50` — coefficient +9.75 (dominant predictor)
-2. `Frees` — positive
-3. `Disposals` — positive
-4. `BMI` / `BMISquared` — nonlinear physical effect
+Feature importances below are from the Course 1 causal analysis (LassoCV coefficients). XGBoost SHAP-based importances are available via the `POST /predict/explain` endpoint.
 
-### Midfield Position
-1. `Disposals` — coefficient +2.54 (primary driver)
-2. `Inside50s` — positive
-3. `Marks` — *negative* (efficiency over volume matters)
-4. `Post666_x_Height` — rule-change era interaction
+### From Course 1 Analysis (LassoCV coefficients)
+
+| Position | Top Feature | Coefficient | Notes |
+|----------|-------------|-------------|-------|
+| Forward | `MarksInside50` | +9.75 | Dominant predictor of goal scoring |
+| Forward | `Disposals` | positive | Volume contributor |
+| Midfield | `Disposals` | +2.54 | Primary driver of clearances |
+| Midfield | `Marks` | negative | Efficiency over volume matters |
+
+For live XGBoost SHAP values on any prediction, call `POST /predict/explain` — returns top 10 features by |SHAP| impact.
 
 ---
 

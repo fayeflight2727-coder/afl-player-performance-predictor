@@ -10,7 +10,7 @@
 
 ## Overview
 
-The AFL Prediction API accepts per-game player statistics and returns a predicted goal output for that player. The model was trained on AFL data from 2012–2022 using chronological splits (validate 2023–2024, test 2025).
+The AFL Prediction API accepts per-game player statistics and returns a predicted goal output for that player. The model (v2) was retrained on AFL data from 2020–2025 using a chronological 80/20 split.
 
 All endpoints return JSON. Predictions are regression outputs (continuous float), not classification probabilities.
 
@@ -189,17 +189,19 @@ Request body is identical to `POST /predict` (see schema above).
   "player_id": "api_request",
   "position": "Forward",
   "target": "Total_Score",
-  "baseline": 0.51,
-  "prediction": 2.14,
+  "baseline": 2.1389,
+  "prediction": 2.1389,
   "top_features": [
-    {"feature": "MarksInside50", "value": 3.0, "shap_value": 0.82, "direction": "positive"},
-    {"feature": "GoalAssists",   "value": 1.0, "shap_value": 0.44, "direction": "positive"},
-    {"feature": "Behinds",       "value": 1.0, "shap_value": 0.31, "direction": "positive"},
-    {"feature": "Disposals",     "value": 22.0,"shap_value": 0.28, "direction": "positive"},
-    {"feature": "HitOuts",       "value": 0.0, "shap_value": -0.12,"direction": "negative"}
+    {"feature": "Year",       "value": 2025.0, "shap_value": 0.0, "direction": "negative"},
+    {"feature": "Disposals",  "value": 22.0,   "shap_value": 0.0, "direction": "negative"},
+    {"feature": "Marks",      "value": 6.0,    "shap_value": 0.0, "direction": "negative"},
+    {"feature": "Behinds",    "value": 1.0,    "shap_value": 0.0, "direction": "negative"},
+    {"feature": "HitOuts",    "value": 0.0,    "shap_value": 0.0, "direction": "negative"}
   ]
 }
 ```
+
+**Known issue:** SHAP values are currently `0.0` because the endpoint uses the prediction row as its own background dataset (`X_background=input_df`). SHAP requires a separate reference sample from training data to compute meaningful attributions. Fix pending in `src/api/main.py` — background should be a sample of ~50 rows from `data/processed/afl_features_latest.csv`.
 
 **Implemented in:** `src/visualization/explainability.py` → `generate_explanation_dict()`
 
