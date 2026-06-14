@@ -1,7 +1,6 @@
 # API Documentation
 
-**Project:** AFL Player Performance Predictor  
-**Owner:** Tia Qiu (ML Analyst/PM)  
+**Project:** AFL Player Performance Predictor   
 **Last Updated:** 2026-06-14  
 **Base URL (local):** `http://localhost:8000`  
 **API Framework:** FastAPI 0.110+  
