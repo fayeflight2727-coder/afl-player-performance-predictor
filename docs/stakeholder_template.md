@@ -101,28 +101,6 @@ What needs to be done and why.
 
 ## Final Presentation Outline (Section 5.9)
 
-Structure for the final presentation, following professor's EnterpriseDataScience Section 5.9 guidelines.
-No live demo required per professor instructions — GitHub repo is the final submission.
-Tia's role: provide slide template + per-slide content guide to teammates. Lead sections 7, 8, 12.
-
-### Slide Structure
-
-| # | Section | Slides | Owner | Professor Topic Covered |
-|---|---------|--------|-------|------------------------|
-| 1 | Team & Project Title | 1 | All | Team intro, GitHub IDs, repo name |
-| 2 | Business Problem | 1 | D (Tia) | Use case, stakeholder value |
-| 3 | Data & Causal Insights (Course 1) | 2 | D (Tia) | Causal inference, ATE/HTE findings |
-| 4 | Solution Architecture | 2 | C (Tracy) | Cloud native app, Docker, system design |
-| 5 | Feature Engineering | 2 | B (Faye) | Advanced feature engineering, data leakage |
-| 6 | Model Training & AutoML | 3 | A (Yanxin) | AutoML, hyperparameter tuning, MLflow tracking |
-| 7 | Explainability (SHAP) | 3 | D (Tia) — LEAD | Explainability, SHAP force plots, feature importance |
-| 8 | Fairness & Ethical AI | 2 | D (Tia) — LEAD | Fairness audit, flagged groups, mitigations |
-| 9 | API & Deployment | 2 | C (Tracy) | ML model serving, FastAPI, Docker deployment |
-| 10 | Monitoring & Drift | 2 | B (Faye) | Feature drift, PSI/KS, drift detection |
-| 11 | CI/CD Pipeline | 1 | C (Tracy) | CI/CD, GitHub Actions, unit tests |
-| 12 | Business Value & Impact | 2 | D (Tia) — LEAD | KPIs, coaching decisions, ROI |
-| 13 | Lessons Learned & Next Steps | 1 | All | Reflection, what's next |
-
 **Total:** ~25 slides
 
 ### Per-Slide Content Guide
