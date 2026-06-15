@@ -1,8 +1,6 @@
 # Stakeholder Communication Template
 
 **Project:** AFL Player Performance Predictor
-**Owner:** Tia Qiu (ML Analyst/PM)
-**Last Updated:** 2026-06-12
 
 ---
 
