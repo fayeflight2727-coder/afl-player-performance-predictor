@@ -1,8 +1,6 @@
 # Feature Catalog
 
 **Project:** AFL Player Performance Predictor
-**Owner:** Tia Qiu (ML Analyst/PM)
-**Last Updated:** 2026-06-12
 **Source:** `src/features/build_features.py` (Faye Wu) + causal analysis results from Course 1
 
 ---

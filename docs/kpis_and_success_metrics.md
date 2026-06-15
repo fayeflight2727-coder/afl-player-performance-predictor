@@ -1,8 +1,6 @@
 # Project KPIs & Success Metrics
 
 **Project:** AFL Player Performance Predictor — Production ML System
-**Owner:** Tia Qiu (ML Analyst/PM)
-**Last Updated:** 2026-06-12
 
 ---
 
