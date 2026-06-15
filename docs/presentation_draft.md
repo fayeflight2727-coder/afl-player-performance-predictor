@@ -4,7 +4,6 @@
 ---
 
 ## SLIDE 1 — Title
-
 **AFL Player Performance Predictor**
 *Predicting, Explaining, and Auditing Goals in the Australian Football League*
 
@@ -23,7 +22,6 @@ GitHub Repo: github.com/fayeflight2727-coder/afl-player-performance-predictor
 ---
 
 ## SLIDE 2 — Business Problem
-
 **Can data predict who scores?**
 
 AFL clubs spend millions on recruitment and selection decisions — largely based on coach intuition and scout reports.
@@ -38,7 +36,6 @@ Use cases: pre-game lineup selection, in-game substitution, opponent weakness an
 ---
 
 ## SLIDE 3 — Data Overview
-
 **Dataset: Kaggle AFL Stats**
 - 127,116 player-game rows | 2012–2025 | Men's senior AFL
 - Sources: `players.csv` (physical attributes) + `stats.csv` (match stats)
@@ -52,7 +49,6 @@ Use cases: pre-game lineup selection, in-game substitution, opponent weakness an
 ---
 
 ## SLIDE 4 — Course 1 Causal Insights
-
 **Why do physical attributes matter? (ATE findings)**
 
 | Physical Attribute | Position | Causal Effect |
@@ -70,8 +66,7 @@ These causal findings validated which features to prioritize in the predictive m
 ---
 
 ## SLIDE 5 — Solution Architecture
-
-**Cloud Native Application Design**
+**End-to-end system overview**
 
 ```
 [Raw Data (Kaggle)]
@@ -87,22 +82,11 @@ These causal findings validated which features to prioritize in the predictive m
 
 **Tech stack:** Python · FastAPI · Docker · MLflow · XGBoost · SHAP · GitHub Actions · pytest
 
----
-
-## SLIDE 6 — Solution Architecture (Deployment View)
-
-**Docker + MLflow + CI/CD**
-
-- Model served inside a **Docker container** (reproducible environment)
-- **MLflow** tracks all experiment runs under `AFL_Goal_Prediction`; model registered as `AFL_Goal_Predictor`
-- **GitHub Actions** runs lint + 41 smoke tests on every pull request
-- Model loads from MLflow registry; falls back to local `.pkl` if registry unavailable
-- Drift monitor runs daily — triggers retraining alert when PSI > 0.25
+Each component is independently deployable, version-controlled, and observable.
 
 ---
 
-## SLIDE 7 — Feature Engineering
-
+## SLIDE 6 — Feature Engineering
 **24 production features across 4 categories**
 
 | Category | Features |
@@ -118,8 +102,7 @@ These causal findings validated which features to prioritize in the predictive m
 
 ---
 
-## SLIDE 8 — Feature Engineering (Continued)
-
+## SLIDE 7 — Feature Engineering (Continued)
 **Causal-informed feature construction**
 - Age × position interaction terms from Course 1 HTE analysis inform which feature combinations to monitor
 - Era flag logic: model trained on 2020–2025 only — post-6-6-6 era data — to avoid structural shift
@@ -131,8 +114,7 @@ These causal findings validated which features to prioritize in the predictive m
 
 ---
 
-## SLIDE 9 — Model Training
-
+## SLIDE 8 — Model Training
 **Algorithm:** XGBRegressor (XGBoost gradient boosting)
 
 | Hyperparameter | Value |
@@ -151,8 +133,7 @@ These causal findings validated which features to prioritize in the predictive m
 
 ---
 
-## SLIDE 10 — AutoML & Hyperparameter Tuning
-
+## SLIDE 9 — AutoML & Hyperparameter Tuning
 **Hyperparameter search via Optuna / Hyperopt**
 
 - Search space: n_estimators [100–500], max_depth [3–8], learning_rate [0.01–0.2], subsample [0.6–1.0]
@@ -170,8 +151,7 @@ v2.1 retrained on recent seasons only → **+32% improvement in R²** by removin
 
 ---
 
-## SLIDE 11 — MLflow Experiment Tracking
-
+## SLIDE 10 — MLflow Experiment Tracking
 **Reproducibility and model governance**
 
 - Experiment: `AFL_Goal_Prediction`
@@ -182,8 +162,7 @@ v2.1 retrained on recent seasons only → **+32% improvement in R²** by removin
 
 ---
 
-## SLIDE 12 — Explainability: What is SHAP?
-
+## SLIDE 11 — Explainability: What is SHAP?
 **SHAP (SHapley Additive exPlanations)**
 
 For any single prediction:
@@ -201,8 +180,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 ---
 
-## SLIDE 13 — Explainability: Forward Example
-
+## SLIDE 12 — Explainability: Forward Example
 **POST /predict/explain — Forward profile (22 disposals, 3 MarksInside50, 85% played)**
 
 | Feature | SHAP Value | Direction |
@@ -219,8 +197,65 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 ---
 
-## SLIDE 14 — Explainability: Live API
+## SLIDE 13 — Fairness Audit: Methodology
+**Ensuring the model treats all player groups equitably**
 
+**Groups audited:**
+1. Primary Position (Forward / Midfield / Ruck / Defender)
+2. Age Segment (Young <23 / Prime 23–28 / Veteran >28)
+3. Rule-change Era (Pre-6-6-6 <2019 / Post-6-6-6 2019+)
+4. Team (18 AFL clubs)
+
+**Flagging thresholds (adapted from industry fairness standards):**
+- MAE ratio > 1.3× overall → group is harder to predict accurately
+- R² gap > 0.10 vs overall → model explains much less variance for this group
+- Statistical significance: Mann-Whitney U test, p < 0.05
+
+**Test set:** Chronological 20% holdout, n = 25,424 observations
+
+---
+
+## SLIDE 14 — Fairness Audit: Results
+**Overall model:** MAE = 0.4293 | R² = 0.489
+
+| Group | Result | Key Finding |
+|-------|--------|-------------|
+| Forward | FLAGGED | MAE ratio = 1.40× — forwards harder to predict precisely |
+| Midfield | FLAGGED | R² gap = 0.23 — model explains much less midfield variance |
+| Ruck | PASS | — |
+| Defender | PASS | — |
+| Young / Prime / Veteran | PASS (all 3) | Age parity holds despite Course 1 HTE findings |
+| Pre-6-6-6 era | FLAGGED | Out-of-distribution: model trained on 2020+ only |
+| Carlton, Richmond | FLAGGED | Unusual player profiles under-represented in training |
+
+**Total flagged: 5 groups across 27 tested**
+
+**Recommended mitigations:** Re-weight Forward/Midfield training samples · Add era indicator features (`Post666`) · Re-audit after next retraining
+
+---
+
+## SLIDE 15 — API & Deployment
+**FastAPI — 3 production endpoints**
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/predict` | POST | Predict goals for a player profile |
+| `/predict/explain` | POST | Predict + return top 10 SHAP values |
+| `/monitoring/drift` | GET | PSI/KS drift scores for all features |
+
+**Sample response — POST /predict:**
+```json
+{"predicted_goals": 2.1389, "model_version": "2.1"}
+```
+
+**Deployment:**
+- Docker container → `docker build -t afl-predictor . && docker run -p 8000:8000 afl-predictor`
+- Model loaded from MLflow registry at startup
+- API validated with 41 smoke tests (pytest + requests)
+
+---
+
+## SLIDE 16 — Explainability: Live API
 **Endpoint: POST /predict/explain**
 
 ```json
@@ -243,69 +278,7 @@ Available for all 4 position profiles.
 
 ---
 
-## SLIDE 15 — Fairness Audit: Methodology
-
-**Ensuring the model treats all player groups equitably**
-
-**Groups audited:**
-1. Primary Position (Forward / Midfield / Ruck / Defender)
-2. Age Segment (Young <23 / Prime 23–28 / Veteran >28)
-3. Rule-change Era (Pre-6-6-6 <2019 / Post-6-6-6 2019+)
-4. Team (18 AFL clubs)
-
-**Flagging thresholds (adapted from industry fairness standards):**
-- MAE ratio > 1.3× overall → group is harder to predict accurately
-- R² gap > 0.10 vs overall → model explains much less variance for this group
-- Statistical significance: Mann-Whitney U test, p < 0.05
-
-**Test set:** Chronological 20% holdout, n = 25,424 observations
-
----
-
-## SLIDE 16 — Fairness Audit: Results
-
-**Overall model:** MAE = 0.4293 | R² = 0.489
-
-| Group | Result | Key Finding |
-|-------|--------|-------------|
-| Forward | FLAGGED | MAE ratio = 1.40× — forwards harder to predict precisely |
-| Midfield | FLAGGED | R² gap = 0.23 — model explains much less midfield variance |
-| Ruck | PASS | — |
-| Defender | PASS | — |
-| Young / Prime / Veteran | PASS (all 3) | Age parity holds despite Course 1 HTE findings |
-| Pre-6-6-6 era | FLAGGED | Out-of-distribution: model trained on 2020+ only |
-| Carlton, Richmond | FLAGGED | Unusual player profiles under-represented in training |
-
-**Total flagged: 5 groups across 27 tested**
-
-**Recommended mitigations:** Re-weight Forward/Midfield training samples · Add era indicator features (`Post666`) · Re-audit after next retraining
-
----
-
-## SLIDE 17 — API & Deployment
-
-**FastAPI — 3 production endpoints**
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/predict` | POST | Predict goals for a player profile |
-| `/predict/explain` | POST | Predict + return top 10 SHAP values |
-| `/monitoring/drift` | GET | PSI/KS drift scores for all features |
-
-**Sample response — POST /predict:**
-```json
-{"predicted_goals": 2.1389, "model_version": "2.1"}
-```
-
-**Deployment:**
-- Docker container → `docker build -t afl-predictor . && docker run -p 8000:8000 afl-predictor`
-- Model loaded from MLflow registry at startup
-- API validated with 41 smoke tests (pytest + requests)
-
----
-
-## SLIDE 18 — API & Deployment (Position Profiles)
-
+## SLIDE 17 — API & Deployment (Position Profiles)
 **Model handles all 4 positions without explicit routing**
 
 | Position | Predicted Goals | Key Driver |
@@ -319,42 +292,20 @@ The model implicitly learns positional patterns from the statistics themselves �
 
 ---
 
-## SLIDE 19 — Monitoring & Drift Detection
+## SLIDE 18 — Solution Architecture: Deployment View
+**Docker + MLflow + GitHub Actions — production-ready infrastructure**
 
-**GET /monitoring/drift — daily PSI/KS checks**
+- Model served inside a **Docker container** (reproducible, portable environment)
+- **MLflow** tracks all experiment runs under `AFL_Goal_Prediction`; model registered as `AFL_Goal_Predictor`
+- **GitHub Actions** runs lint + 41 smoke tests on every pull request
+- Model loads from MLflow registry at startup; falls back to local `.pkl` if registry unavailable
+- Drift monitor runs daily — triggers retraining alert when PSI > 0.25
 
-Comparing training distribution (≤2022) vs current season data (2023–2025):
-
-| Feature | PSI | KS p-value | Status |
-|---------|-----|------------|--------|
-| Weight | 0.148 | — | ⚠ Moderate drift |
-| Height | <0.10 | — | Stable |
-| Disposals | <0.10 | — | Stable |
-| ... (9 features total) | | | |
-
-**Weight drift interpretation:** Modern AFL players are trending lighter — the 2023–2025 cohort has a shifted Weight distribution vs training data.
-
-**Retraining trigger:** PSI > 0.25 on any key feature OR R² drops below threshold on recent match predictions.
+This infrastructure reflects the full ML production lifecycle: build → register → serve → monitor → retrain.
 
 ---
 
-## SLIDE 20 — Monitoring: Drift Types
-
-**4 types of drift monitored (ML Engineering framework)**
-
-| Drift Type | What it means | How we detect it |
-|------------|--------------|-----------------|
-| Feature drift | Input stats distribution changes | PSI / KS test |
-| Target drift | Goals distribution shifts | PSI on Goals |
-| Concept drift | Relationship between features and goals changes | R² degradation on recent data |
-| Prediction drift | Model output distribution shifts | PSI on predicted_goals |
-
-Current status: **Feature drift only (Weight, moderate)**. No concept or target drift detected.
-
----
-
-## SLIDE 21 — CI/CD Pipeline
-
+## SLIDE 19 — CI/CD Pipeline
 **Automated quality gate on every commit**
 
 ```
@@ -373,8 +324,39 @@ Merge to main → Docker image rebuilt → API redeployed
 
 ---
 
-## SLIDE 22 — Business Value: KPIs Met
+## SLIDE 20 — Monitoring & Drift Detection
+**GET /monitoring/drift — daily PSI/KS checks**
 
+Comparing training distribution (≤2022) vs current season data (2023–2025):
+
+| Feature | PSI | KS p-value | Status |
+|---------|-----|------------|--------|
+| Weight | 0.148 | — | ⚠ Moderate drift |
+| Height | <0.10 | — | Stable |
+| Disposals | <0.10 | — | Stable |
+| ... (9 features total) | | | |
+
+**Weight drift interpretation:** Modern AFL players are trending lighter — the 2023–2025 cohort has a shifted Weight distribution vs training data.
+
+**Retraining trigger:** PSI > 0.25 on any key feature OR R² drops below threshold on recent match predictions.
+
+---
+
+## SLIDE 21 — Monitoring: Drift Types
+**4 types of drift monitored (ML Engineering framework)**
+
+| Drift Type | What it means | How we detect it |
+|------------|--------------|-----------------|
+| Feature drift | Input stats distribution changes | PSI / KS test |
+| Target drift | Goals distribution shifts | PSI on Goals |
+| Concept drift | Relationship between features and goals changes | R² degradation on recent data |
+| Prediction drift | Model output distribution shifts | PSI on predicted_goals |
+
+Current status: **Feature drift only (Weight, moderate)**. No concept or target drift detected.
+
+---
+
+## SLIDE 22 — Business Value: KPIs Met
 **What we set out to deliver vs what we achieved**
 
 | KPI | Target | Achieved |
@@ -390,7 +372,6 @@ Merge to main → Docker image rebuilt → API redeployed
 ---
 
 ## SLIDE 23 — Business Value: Coaching Use Cases
-
 **Turning model output into coaching decisions**
 
 **Pre-game selection:**
@@ -410,7 +391,6 @@ Merge to main → Docker image rebuilt → API redeployed
 ---
 
 ## SLIDE 24 — Lessons Learned & Next Steps
-
 **What we learned building a production ML system**
 
 | Lesson | Detail |
