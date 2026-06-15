@@ -1,0 +1,28 @@
+group_col,group,n,mae,rmse,r2,mae_ratio,r2_gap,p_value,significant,flagged
+PrimaryPosition,Forward,8136,0.6011,0.8162,0.4618,1.4,0.027,0.0,True,True
+PrimaryPosition,Midfield,8503,0.4291,0.5785,0.2594,1.0,0.23,0.0,True,True
+PrimaryPosition,Ruck,1634,0.4196,0.6138,0.5465,0.977,-0.058,0.176,False,False
+PrimaryPosition,Defender,7151,0.2363,0.3903,0.4078,0.55,0.081,0.0,True,False
+AgeSegment,Young (<23),13845,0.4274,0.6183,0.4586,0.996,0.03,0.0042,True,False
+AgeSegment,Prime (23-28),11055,0.4288,0.6326,0.5188,0.999,-0.03,0.0001,True,False
+AgeSegment,Veteran (>28),524,0.491,0.6964,0.5105,1.144,-0.021,0.0004,True,False
+Era,Pre-6-6-6 (<2019),568,0.5176,0.7791,0.3316,1.206,0.157,0.0059,True,True
+Era,Post-6-6-6 (2019+),24856,0.4273,0.6223,0.4928,0.995,-0.004,0.0059,True,False
+Team,Adelaide,1705,0.4167,0.6166,0.4793,0.971,0.01,0.0643,False,False
+Team,Brisbane,1321,0.3694,0.5563,0.4834,0.86,0.006,0.0,True,False
+Team,Carlton,919,0.4452,0.6358,0.338,1.037,0.151,0.0454,True,True
+Team,Collingwood,1262,0.4511,0.6732,0.5392,1.051,-0.05,0.7818,False,False
+Team,Essendon,1375,0.4042,0.5852,0.3911,0.942,0.098,0.0503,False,False
+Team,Fremantle,1371,0.4486,0.641,0.5328,1.045,-0.044,0.006,True,False
+Team,Geelong,1434,0.4447,0.6419,0.4018,1.036,0.087,0.1699,False,False
+Team,Gold Coast,1536,0.4545,0.6553,0.567,1.059,-0.078,0.001,True,False
+Team,Greater Western Sydney,1606,0.3576,0.5623,0.4712,0.833,0.018,0.0,True,False
+Team,Hawthorn,1643,0.4439,0.6059,0.4931,1.034,-0.004,0.0,True,False
+Team,Melbourne,1273,0.4424,0.6679,0.4182,1.031,0.071,0.9155,False,False
+Team,North Melbourne,1379,0.3909,0.544,0.4191,0.911,0.07,0.225,False,False
+Team,Port Adelaide,1474,0.4402,0.6316,0.4806,1.025,0.008,0.0687,False,False
+Team,Richmond,1249,0.42,0.6024,0.3329,0.978,0.156,0.6708,False,True
+Team,St Kilda,1262,0.424,0.651,0.578,0.988,-0.089,0.0009,True,False
+Team,Sydney,1570,0.4602,0.6516,0.411,1.072,0.078,0.0,True,False
+Team,West Coast,1586,0.4181,0.6157,0.4622,0.974,0.027,0.275,False,False
+Team,Western Bulldogs,1459,0.5012,0.7193,0.5852,1.168,-0.096,0.0,True,False
