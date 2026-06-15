@@ -1,9 +1,6 @@
 # Fairness Audit Framework
 
 **Project:** AFL Player Performance Predictor
-**Owner:** Tia Qiu (ML Analyst/PM)
-**Phase:** 5 (Week 3–4) — Lead deliverable
-**Last Updated:** 2026-06-12
 
 ---
 
