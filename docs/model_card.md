@@ -1,8 +1,6 @@
 # Model Card — AFL Player Performance Predictor
 
 **Version:** 2.0 (Production)
-**Owner:** Tia Qiu (ML Analyst/PM)
-**Last Updated:** 2026-06-14
 **Status:** Deployed — Phase 5 (API live, SHAP explainability endpoint live)
 
 ---
