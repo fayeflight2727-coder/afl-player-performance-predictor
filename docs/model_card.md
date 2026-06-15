@@ -156,4 +156,5 @@ See `docs/fairness_audit_framework.md` for methodology.
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-02 | Course 1 — notebook-based, Streamlit dashboard |
-| 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD |
+| 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD. Initial training on 2012–2025 data: R²=0.37 |
+| 2.1 | 2026-06 | Retrained on 2020–2025 data (recent seasons only): R²=0.489, MAE=0.429 — improvement of +32% in R² |
