@@ -428,5 +428,3 @@ Merge to main → Docker image rebuilt → API redeployed
 
 ---
 
-*Presentation by: Yanxin Li · Faye · Tracy Chan · Tia Qiu*
-*McGill MMA8 INSY 684 — June 2026*
