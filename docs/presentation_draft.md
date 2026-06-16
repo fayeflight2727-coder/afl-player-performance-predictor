@@ -302,26 +302,26 @@ Merge to main → Docker image rebuilt → API redeployed
 - R² gap > 0.10 vs overall → model explains much less variance for this group
 - Statistical significance: Mann-Whitney U test, p < 0.05
 
-**Test set:** Chronological 20% holdout, n = 25,424 observations
+**Test set:** Chronological 20% holdout, n = 10,965 observations (2021–2025) — matches the model's actual 2020+ training window
 
 ---
 
 ## SLIDE 19 — Fairness Audit: Results
-**Overall model:** MAE = 0.4293 | R² = 0.489
+**Overall model:** MAE = 0.4174 | R² = 0.4883
 
 | Group | Result | Key Finding |
 |-------|--------|-------------|
-| Forward | FLAGGED | MAE ratio = 1.40× — forwards harder to predict precisely |
-| Midfield | FLAGGED | R² gap = 0.23 — model explains much less midfield variance |
-| Ruck | PASS | — |
+| Forward | FLAGGED | MAE ratio = 1.39× — forwards harder to predict precisely |
+| Midfield | FLAGGED | R² gap = 0.16 — model explains much less midfield variance |
+| Ruck | FLAGGED | R² gap = 0.165 (overperforms average) — not statistically significant, likely small-sample noise (n=619) |
 | Defender | PASS | — |
-| Young / Prime / Veteran | PASS (all 3) | Age parity holds despite Course 1 HTE findings |
-| Pre-6-6-6 era | FLAGGED | Out-of-distribution: model trained on 2020+ only |
-| Carlton, Richmond | FLAGGED | Unusual player profiles under-represented in training |
+| Young / Prime | PASS (both) | Age parity holds; Veteran segment excluded — too few observations (<20) in this smaller window |
+| Rule-change era | N/A | No pre-2019 rows remain once filtered to match the model's training window |
+| Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs | FLAGGED | Unusual player profiles under-represented in training |
 
-**Total flagged: 5 groups across 27 tested**
+**Total flagged: 8 groups across 24 tested**
 
-**Recommended mitigations:** Re-weight Forward/Midfield training samples · Add era indicator features (`Post666`) · Re-audit after next retraining
+**Recommended mitigations:** Re-weight Forward/Midfield training samples · Investigate Ruck sample size before acting on this flag · Re-audit after next retraining
 
 ---
 
@@ -366,7 +366,7 @@ Current status: **Feature drift only (Weight, moderate)**. No concept or target 
 | API latency | < 200ms | < 200ms ✓ |
 | Test suite | ≥ 80% pass rate | 41/41 (100%) ✓ |
 | Explainability | Per-prediction SHAP | Live endpoint ✓ |
-| Fairness audit | All groups evaluated | 27 groups tested ✓ |
+| Fairness audit | All groups evaluated | 24 groups tested ✓ |
 | Drift monitoring | PSI/KS live | Live endpoint ✓ |
 | CI/CD | Automated on PR | GitHub Actions ✓ |
 
@@ -402,8 +402,8 @@ Current status: **Feature drift only (Weight, moderate)**. No concept or target 
 | Retraining on recent data beats more data | v2.0 (2012–2025): R²=0.37 → v2.1 (2020–2025): R²=0.49 |
 
 **Next steps:**
-- Position-specific sub-models (Forward model, Ruck model) to address Midfield R²=0.26
-- Add era indicator features (`Post666`, `RotEra`) to fix Pre-6-6-6 fairness flag
+- Position-specific sub-models (Forward model, Ruck model) to address Midfield R²=0.33
+- Bring pre-2019 data back in with era indicator features (`Post666`, `RotEra`) so the model can learn from the full rule-change history without the bias that caused us to drop it
 - Causal interaction terms (height×ruck, age×position) as production features
 - Expand to women's AFL (AFLW) once labelled data is available
 

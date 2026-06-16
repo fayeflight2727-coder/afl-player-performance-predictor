@@ -152,8 +152,8 @@ What needs to be done and why.
 - 41 smoke tests covering all endpoints and explainability module
 
 **Slides 18–19 — Fairness & Ethical AI**
-- Slide 18: Audit methodology — 4 groups (position, age, era, team), thresholds MAE ratio >1.3×, R² gap >0.10
-- Slide 19: Results — 5 flagged groups: Forward (MAE 1.40×), Midfield (R² gap 0.23), Pre-2019 era, Carlton, Richmond. Age segments all PASS. Recommended mitigations.
+- Slide 18: Audit methodology — 4 groups (position, age, era, team), thresholds MAE ratio >1.3×, R² gap >0.10. Test set matches the model's actual training window (2020+).
+- Slide 19: Results — 8 flagged groups: Forward (MAE 1.39×), Midfield (R² gap 0.16), Ruck (R² gap 0.165, not significant), Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs. Age segments all PASS. Rule-change era audit N/A (no pre-2019 data remains once filtered to match training). Recommended mitigations.
 
 **Slides 20–21 — Monitoring & Drift**
 - PSI/KS tests on 9 features comparing train (≤2022) vs current (2023–2025)

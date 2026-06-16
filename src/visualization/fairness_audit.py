@@ -48,6 +48,12 @@ print("Loading model and data...")
 model = joblib.load(MODEL_PATH)
 df = pd.read_csv(DATA_PATH).dropna(subset=[TARGET])
 
+# Model v2.1 was trained only on 2020-2025 data (see docs/model_card.md).
+# Match that same filter here so the audit's test set reflects what the
+# model actually saw, instead of re-splitting the full 2012-2025 dataset
+# and accidentally testing on pre-2020 rows the model was never trained on.
+df = df[df["Year"] >= 2020].reset_index(drop=True)
+
 X = df[FEATURES].fillna(0)
 y = df[TARGET]
 
@@ -125,13 +131,20 @@ for seg in ["Young (<23)", "Prime (23-28)", "Veteran (>28)"]:
 
 print("\nRule-change era:")
 meta["Era"] = meta["Year"].apply(lambda y: "Post-6-6-6 (2019+)" if y >= 2019 else "Pre-6-6-6 (<2019)")
-for era in ["Pre-6-6-6 (<2019)", "Post-6-6-6 (2019+)"]:
-    g = meta[meta["Era"] == era]
-    r = group_metrics(g, "Era", era)
-    if r:
-        results.append(r)
-        flag = " *** FLAGGED" if r["flagged"] else ""
-        print(f"  {era:22s}  n={r['n']:5,}  MAE={r['mae']:.4f}  R²={r['r2']:.4f}  ratio={r['mae_ratio']:.2f}{flag}")
+era_counts = meta["Era"].value_counts()
+era_applicable = era_counts.get("Pre-6-6-6 (<2019)", 0) >= 20 and era_counts.get("Post-6-6-6 (2019+)", 0) >= 20
+
+if era_applicable:
+    for era in ["Pre-6-6-6 (<2019)", "Post-6-6-6 (2019+)"]:
+        g = meta[meta["Era"] == era]
+        r = group_metrics(g, "Era", era)
+        if r:
+            results.append(r)
+            flag = " *** FLAGGED" if r["flagged"] else ""
+            print(f"  {era:22s}  n={r['n']:5,}  MAE={r['mae']:.4f}  R²={r['r2']:.4f}  ratio={r['mae_ratio']:.2f}{flag}")
+else:
+    print("  Not applicable — model trained/tested only on 2020+ data, so every")
+    print("  row is already Post-6-6-6. No pre-2019 rows remain to compare against.")
 
 # ── 4. Team ───────────────────────────────────────────────────────────────────
 
@@ -301,15 +314,23 @@ report += """
 ## 3. Rule-Change Era Audit
 
 """
-report += md_table(era_df, cols)
-report += "\n\n![Rule-change era comparison](figures/fairness/era_comparison.png)\n"
-report += "\n**Findings:**\n"
-if len(era_flagged) == 0:
-    report += "- No era groups exceed thresholds. The model generalises across pre- and post-6-6-6 rule eras.\n"
+if era_df.empty:
+    report += (
+        "**Not applicable.** The model is trained and tested only on 2020+ data "
+        "(see `docs/model_card.md`), so every row in the test set is already "
+        "Post-6-6-6 — there are no pre-2019 rows left to compare against. "
+        "This audit dimension cannot be evaluated for this model version.\n"
+    )
 else:
-    for _, row in era_flagged.iterrows():
-        sig = f"statistically significant (p={row['p_value']:.4f})" if row["significant"] else "not statistically significant"
-        report += f"- **{row['group']}** flagged: MAE ratio={row['mae_ratio']:.2f}× — {sig}.\n"
+    report += md_table(era_df, cols)
+    report += "\n\n![Rule-change era comparison](figures/fairness/era_comparison.png)\n"
+    report += "\n**Findings:**\n"
+    if len(era_flagged) == 0:
+        report += "- No era groups exceed thresholds. The model generalises across pre- and post-6-6-6 rule eras.\n"
+    else:
+        for _, row in era_flagged.iterrows():
+            sig = f"statistically significant (p={row['p_value']:.4f})" if row["significant"] else "not statistically significant"
+            report += f"- **{row['group']}** flagged: MAE ratio={row['mae_ratio']:.2f}× — {sig}.\n"
 
 if len(team_df) > 0:
     worst_team = team_df.loc[team_df["mae"].idxmax()]
@@ -347,7 +368,7 @@ report += f"""
 |-------------|--------------|---------|--------|
 | Position | {len(pos_df)} | {len(pos_flagged)} | {"NEEDS REVIEW" if len(pos_flagged) > 0 else "PASS"} |
 | Age Segment | {len(age_df)} | {len(age_flagged)} | {"NEEDS REVIEW" if len(age_flagged) > 0 else "PASS"} |
-| Rule-Change Era | {len(era_df)} | {len(era_flagged)} | {"NEEDS REVIEW" if len(era_flagged) > 0 else "PASS"} |
+| Rule-Change Era | {len(era_df)} | {len(era_flagged)} | {"N/A — no pre-2019 data in test set" if era_df.empty else ("NEEDS REVIEW" if len(era_flagged) > 0 else "PASS")} |
 | Team | {len(team_df)} | {n_teams_flagged} | {"NEEDS REVIEW" if n_teams_flagged > 0 else "PASS"} |
 
 **Total flagged groups: {total_flagged}**

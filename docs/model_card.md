@@ -122,10 +122,10 @@ Based on HTE analysis from Course 1:
 | Post-2019 data | 6-6-6 rule structurally changed ruck performance | Mixing pre/post data without era features causes bias |
 
 ### Fairness Audit Status
-- [x] Position-group performance parity audit — 2 flagged (Forward MAE 1.40×, Midfield R² gap 0.23)
-- [x] Team-group performance parity audit — 2 flagged (Carlton, Richmond)
-- [x] Age-segment performance parity audit — all PASS
-- [x] Rule-change era audit — Pre-6-6-6 era flagged (out-of-distribution)
+- [x] Position-group performance parity audit — 3 flagged (Forward MAE 1.39×, Midfield R² gap 0.16, Ruck R² gap 0.165 not statistically significant)
+- [x] Team-group performance parity audit — 5 flagged (Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs)
+- [x] Age-segment performance parity audit — all PASS (Veteran segment excluded — fewer than 20 observations in the 2020+ test window)
+- [x] Rule-change era audit — N/A; model is trained/tested only on 2020+ data, so no pre-2019 rows remain to compare against
 - [ ] Bias mitigation (position re-weighting, era indicator features) — future work
 
 See `reports/fairness_report.md` for full results and `docs/fairness_audit_framework.md` for methodology.
