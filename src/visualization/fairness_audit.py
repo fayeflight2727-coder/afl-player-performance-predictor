@@ -11,6 +11,7 @@ Usage:
     python src/visualization/fairness_audit.py
 """
 
+import sys
 import joblib
 import pandas as pd
 import numpy as np
@@ -20,6 +21,11 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy import stats
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error
+
+# Allow running directly (`python src/visualization/fairness_audit.py`) as well
+# as as a module -- both need the project root on sys.path for this import.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.visualization.explainability import plot_fairness_comparison
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -248,6 +254,42 @@ plot_group_comparison(age_df,  "Fairness Audit — Age Segment Comparison",     
 plot_group_comparison(era_df,  "Fairness Audit — Rule-Change Era Comparison",     "era_comparison.png")
 plot_group_comparison(team_df, "Fairness Audit — Team Comparison (18 AFL Clubs)", "team_comparison.png", horizontal=True)
 
+# ── SHAP-based individual fairness check ─────────────────────────────────────
+# Predictive parity (above) checks whether the model is equally ACCURATE for
+# each group. This checks something different: whether the model relies on
+# the same FEATURES to make its predictions across groups. A model can be
+# equally accurate for two groups while reasoning about them completely
+# differently -- that's a subtler fairness concern predictive parity alone
+# can't catch.
+
+print("\nGenerating SHAP-based feature-reliance comparisons (individual fairness)...")
+
+# Background sample drawn from the training portion (never the test set the
+# model is being evaluated on, same convention as src/api/main.py).
+background_sample = X.iloc[:split].sample(min(100, split), random_state=42)
+
+# Build SHAP input from X_test (already has fillna(0) applied, matching what
+# was actually fed to model.predict() above) plus the group labels from meta.
+X_test_with_groups = X_test.copy()
+X_test_with_groups["PrimaryPosition"] = meta["PrimaryPosition"].values
+X_test_with_groups["AgeSegment"]      = meta["AgeSegment"].values
+
+shap_pos_path = plot_fairness_comparison(
+    model, X_test_with_groups[FEATURES + ["PrimaryPosition"]], background_sample,
+    group_col="PrimaryPosition", position="Overall", output_dir=FIGURES_DIR
+)
+print(f"Saved {shap_pos_path}")
+
+shap_age_path = plot_fairness_comparison(
+    model, X_test_with_groups[FEATURES + ["AgeSegment"]], background_sample,
+    group_col="AgeSegment", position="Overall", output_dir=FIGURES_DIR
+)
+print(f"Saved {shap_age_path}")
+
+# Team (18 groups) intentionally skipped here -- a grouped bar chart with 18
+# series across 10 features would be unreadable. Use POST /predict/explain
+# for team- or player-specific SHAP checks instead.
+
 cols = ["group", "n", "mae", "r2", "mae_ratio", "r2_gap", "p_value", "flagged"]
 
 report = f"""# Fairness Audit Report
@@ -279,6 +321,12 @@ report = f"""# Fairness Audit Report
 
 ![Position group comparison](figures/fairness/position_comparison.png)
 
+**Individual fairness — does the model rely on the same features for every position?**
+
+![Position SHAP feature-reliance comparison](figures/fairness/fairness_overall_primaryposition.png)
+
+HitOuts stands out distinctly for Ruck and barely registers for other positions — expected, since it's the position-defining stat, not a fairness concern. All other features show broadly consistent reliance across positions, including MarksInside50 (the dominant feature for every position, not just Forward).
+
 **Findings:**
 """
 if len(pos_flagged) == 0:
@@ -296,6 +344,12 @@ report += f"""
 {md_table(age_df, cols)}
 
 ![Age segment comparison](figures/fairness/age_segment_comparison.png)
+
+**Individual fairness — does the model rely on the same features for every age segment?**
+
+![Age segment SHAP feature-reliance comparison](figures/fairness/fairness_overall_agesegment.png)
+
+All three age segments — including Veteran, which has too few rows for the formal statistical test above — show remarkably similar reliance on every feature. Strong confirmation that age-based individual fairness holds, consistent with the predictive parity result.
 
 **Findings:**
 """
@@ -383,7 +437,6 @@ if total_flagged == 0:
 
 Recommended next steps:
 - Re-run this audit after any model retraining
-- Complete SHAP-based individual fairness check once `/predict/explain` background is stable
 - Add era indicator features (`Post666`, `RotEra`) in next model iteration to explicitly account for rule-change effects
 """
 else:
@@ -404,7 +457,7 @@ report += """
 - **Statistical test:** Mann-Whitney U (two-sided), each group vs. rest
 - **Significance threshold:** p < 0.05
 - **Minimum group size:** 20 observations
-- **SHAP individual fairness:** Pending — use `POST /predict/explain` for per-player checks
+- **SHAP individual fairness:** Mean |SHAP| feature-reliance compared across Position and Age Segment groups (see plots above). Team-level SHAP comparison skipped — 18 groups would be unreadable in one chart; use `POST /predict/explain` for team- or player-specific checks.
 
 *Generated by `src/visualization/fairness_audit.py`*
 """

@@ -294,8 +294,7 @@ Merge to main → Docker image rebuilt → API redeployed
 **Groups audited:**
 1. Primary Position (Forward / Midfield / Ruck / Defender)
 2. Age Segment (Young <23 / Prime 23–28 / Veteran >28)
-3. Rule-change Era (Pre-6-6-6 <2019 / Post-6-6-6 2019+)
-4. Team (18 AFL clubs)
+3. Team (18 AFL clubs)
 
 **Flagging thresholds (adapted from industry fairness standards):**
 - MAE ratio > 1.3× overall → group is harder to predict accurately
@@ -316,7 +315,6 @@ Merge to main → Docker image rebuilt → API redeployed
 | Ruck | FLAGGED | R² gap = 0.165 (overperforms average) — not statistically significant, likely small-sample noise (n=619) |
 | Defender | PASS | — |
 | Young / Prime | PASS (both) | Age parity holds; Veteran segment excluded — too few observations (<20) in this smaller window |
-| Rule-change era | N/A | No pre-2019 rows remain once filtered to match the model's training window |
 | Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs | FLAGGED | Unusual player profiles under-represented in training |
 
 **Total flagged: 8 groups across 24 tested**

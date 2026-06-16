@@ -261,13 +261,17 @@ def plot_fairness_comparison(
     position: str,
     top_n: int = 10,
     save: bool = True,
+    output_dir: Path = None,
 ) -> str:
     """
     Compare mean |SHAP| values across demographic/positional groups.
-    Used in the fairness audit to check if different groups rely on different features.
+    Used in the fairness audit to check if different groups rely on different features
+    for the same prediction -- i.e. individual fairness, not just predictive parity.
 
     group_col: column in X_df to split on (e.g. 'PrimaryPosition', 'AgeSegment', 'Team')
+    output_dir: override the default save location (reports/figures/explainability)
     """
+    save_dir = output_dir if output_dir is not None else OUTPUT_DIR
     groups = X_df[group_col].unique()
     feature_names = [c for c in X_df.columns if c != group_col]
 
@@ -305,7 +309,7 @@ def plot_fairness_comparison(
     ax.legend()
     plt.tight_layout()
 
-    path = OUTPUT_DIR / f"fairness_{position.lower()}_{group_col.lower()}.png"
+    path = save_dir / f"fairness_{position.lower()}_{group_col.lower()}.png"
     if save:
         fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
