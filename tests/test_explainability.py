@@ -13,7 +13,7 @@ from src.visualization.explainability import (
     explain_prediction,
     explain_batch,
     generate_explanation_dict,
-    POSITION_TARGETS,
+    MODEL_TARGET,
 )
 
 FEATURES = ["MarksInside50", "Disposals", "Age", "BMI", "HitOuts"]
@@ -41,8 +41,9 @@ def instance(background):
     return background.iloc[[0]]
 
 
-def test_position_targets_defined():
-    assert set(POSITION_TARGETS.keys()) == {"Forward", "Midfield", "Ruck", "Defender"}
+def test_model_target_is_goals():
+    """Production model is a single regressor predicting Goals for every position."""
+    assert MODEL_TARGET == "Goals"
 
 
 def test_get_explainer_returns_explainer(linear_model, background):
@@ -97,7 +98,7 @@ def test_generate_explanation_dict_keys(linear_model, instance, background):
     )
     assert result["player_id"] == "test_player"
     assert result["position"]  == "Forward"
-    assert result["target"]    == POSITION_TARGETS["Forward"]
+    assert result["target"]    == MODEL_TARGET
     assert "baseline"          in result
     assert "prediction"        in result
     assert len(result["top_features"]) == 3

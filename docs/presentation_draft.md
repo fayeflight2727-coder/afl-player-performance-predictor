@@ -225,7 +225,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 {
   "player_id": "api_request",
   "position": "Forward",
-  "target": "Total_Score",
+  "target": "Goals",
   "baseline": 0.4281,
   "prediction": 2.1389,
   "top_features": [

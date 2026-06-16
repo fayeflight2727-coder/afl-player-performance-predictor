@@ -187,7 +187,7 @@ Request body is identical to `POST /predict` (see schema above).
 {
   "player_id": "api_request",
   "position": "Forward",
-  "target": "Total_Score",
+  "target": "Goals",
   "baseline": 0.4281,
   "prediction": 2.1389,
   "top_features": [

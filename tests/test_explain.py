@@ -56,18 +56,14 @@ def test_explain_prediction_matches_predict():
 @requires_api
 def test_explain_forward_target():
     r = requests.post(f"{BASE_URL}/predict/explain?position=Forward", json=FORWARD_PAYLOAD)
-    assert r.json()["target"] == "Total_Score"
+    assert r.json()["target"] == "Goals"
 
 
 @requires_api
-@pytest.mark.parametrize("position,expected_target", [
-    ("Forward",  "Total_Score"),
-    ("Midfield", "Clearances"),
-    ("Ruck",     "HitOuts"),
-    ("Defender", "Rebounds"),
-])
-def test_explain_target_by_position(position, expected_target):
+@pytest.mark.parametrize("position", ["Forward", "Midfield", "Ruck", "Defender"])
+def test_explain_target_by_position(position):
+    """Target is always Goals — the model has no position-specific routing."""
     from tests.conftest import ALL_POSITION_PAYLOADS
     payload = dict(ALL_POSITION_PAYLOADS)[position]
     r = requests.post(f"{BASE_URL}/predict/explain?position={position}", json=payload)
-    assert r.json()["target"] == expected_target
+    assert r.json()["target"] == "Goals"

@@ -1,7 +1,10 @@
 """
 SHAP-based explainability for AFL Player Performance Predictor.
 
-Supports position-specific models (Forward, Midfield, Ruck, Defender).
+Production model is a single XGBRegressor predicting `Goals` for every
+position. The `position` argument below is used only to label outputs
+and group fairness comparisons — it does not route to a different model
+or target variable.
 Works with both LassoCV (LinearExplainer) and XGBoost (TreeExplainer).
 
 Usage:
@@ -23,12 +26,8 @@ from typing import Union
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-POSITION_TARGETS = {
-    "Forward":  "Total_Score",
-    "Midfield": "Clearances",
-    "Ruck":     "HitOuts",
-    "Defender": "Rebounds",
-}
+# Production model always predicts this single target, regardless of position.
+MODEL_TARGET = "Goals"
 
 # Audit groups from fairness_audit_framework.md
 AGE_SEGMENTS = {
@@ -161,7 +160,7 @@ def plot_waterfall(
     ax.set_title(
         f"Prediction Explanation — {position} | {player_id}\n"
         f"Baseline: {explanation['expected_value']:.2f}  |  "
-        f"Target: {POSITION_TARGETS.get(position, 'score')}"
+        f"Target: {MODEL_TARGET}"
     )
 
     # Add value labels
@@ -242,7 +241,7 @@ def plot_global_importance(
     ax.set_xlabel("Mean |SHAP Value|")
     ax.set_title(
         f"Global Feature Importance — {position} Model\n"
-        f"Target: {POSITION_TARGETS.get(position, 'score')}  |  "
+        f"Target: {MODEL_TARGET}  |  "
         f"n={len(X_df):,} predictions"
     )
     plt.tight_layout()
@@ -356,7 +355,7 @@ def generate_explanation_dict(
     {
         "player_id": "12345",
         "position": "Forward",
-        "target": "Total_Score",
+        "target": "Goals",
         "baseline": 3.21,
         "prediction": 5.84,
         "top_features": [
@@ -371,7 +370,7 @@ def generate_explanation_dict(
     return {
         "player_id": player_id,
         "position": position,
-        "target": POSITION_TARGETS.get(position, "score"),
+        "target": MODEL_TARGET,
         "baseline": round(exp["expected_value"], 4),
         "prediction": round(float(prediction), 4),
         "top_features": [
