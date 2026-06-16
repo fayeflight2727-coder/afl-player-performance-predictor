@@ -12,10 +12,10 @@ June 2026
 
 | Member | Role | GitHub ID |
 |--------|------|-----------|
-| Yanxin Li | ML Engineer | |
-| Faye | Data Engineer | fayeflight2727-coder |
-| Tracy Chan | Backend Engineer | |
-| Tia Qiu | ML Analyst / PM | |
+| Yanxin Li | ML Engineer | @yanxinlii |
+| Faye | Data Engineer | @fayeflight2727-coder |
+| Tracy Chan | Backend Engineer | @tracychanty |
+| Tia Qiu | ML Analyst / PM | @tiaqiu1016 |
 
 GitHub Repo: github.com/fayeflight2727-coder/afl-player-performance-predictor
 
