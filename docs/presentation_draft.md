@@ -175,7 +175,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 - TreeExplainer: exact SHAP values for XGBoost (no approximation)
 
 **Why it matters for coaches:**
-- Not just "2.14 goals predicted" — but *why*: "MarksInside50 added +1.75, HitOuts subtracted −0.12"
+- Not just "2.14 goals predicted" — but *why*: "MarksInside50 added +1.75 goals, Behinds subtracted −0.09"
 - Actionable: identify which player attributes to target in selection and training plans
 
 ---
