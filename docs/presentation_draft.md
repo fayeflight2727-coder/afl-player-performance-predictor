@@ -186,14 +186,14 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 | Feature | SHAP Value | Direction |
 |---------|-----------|-----------|
 | MarksInside50 | +1.747 | ↑ Goals |
-| GoalAssists | +0.312 | ↑ Goals |
-| Inside50s | +0.198 | ↑ Goals |
-| HitOuts | −0.089 | ↓ Goals |
-| Weight | −0.054 | ↓ Goals |
+| Behinds | −0.086 | ↓ Goals |
+| Marks | −0.079 | ↓ Goals |
+| GoalAssists | −0.060 | ↓ Goals |
+| Disposals | +0.049 | ↑ Goals |
 
 - **Baseline:** 0.4281 goals
 - **Predicted:** 2.1389 goals
-- **MarksInside50 dominates** — consistent with Course 1 LassoCV coefficient (+9.75)
+- **MarksInside50 dominates** — consistent with Course 1 LassoCV coefficient (+9.75); every other feature contributes under ±0.1 goals
 
 ---
 
@@ -225,12 +225,13 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 {
   "player_id": "api_request",
   "position": "Forward",
+  "target": "Total_Score",
   "baseline": 0.4281,
   "prediction": 2.1389,
-  "target": "Goals",
   "top_features": [
-    {"feature": "MarksInside50", "shap_value": 1.747, "direction": "positive"},
-    {"feature": "GoalAssists",   "shap_value": 0.312, "direction": "positive"},
+    {"feature": "MarksInside50", "shap_value": 1.7470, "direction": "positive"},
+    {"feature": "Behinds",       "shap_value": -0.0856, "direction": "negative"},
+    {"feature": "Marks",         "shap_value": -0.0788, "direction": "negative"},
     ...
   ]
 }
