@@ -408,5 +408,3 @@ Current status: **Feature drift only (Weight, moderate)**. No concept or target 
 
 ---
 
-*Presentation by: Yanxin Li · Faye · Tracy Chan · Tia Qiu*
-*McGill MMA8 INSY 684 — June 2026*
