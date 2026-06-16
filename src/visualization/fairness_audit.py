@@ -54,11 +54,12 @@ print("Loading model and data...")
 model = joblib.load(MODEL_PATH)
 df = pd.read_csv(DATA_PATH).dropna(subset=[TARGET])
 
-# Model v2.1 was trained only on 2020-2025 data (see docs/model_card.md).
-# Match that same filter here so the audit's test set reflects what the
-# model actually saw, instead of re-splitting the full 2012-2025 dataset
-# and accidentally testing on pre-2020 rows the model was never trained on.
-df = df[df["Year"] >= 2020].reset_index(drop=True)
+# NOTE: A 2020+ filter was added here at one point based on a claim that the
+# model was retrained on a 2020-2025 subset. That claim could not be verified
+# -- src/models/train.py has no year-filtering logic, and the model performs
+# consistently across 2012-2015, 2016-2019, and 2020-2022 (no degradation on
+# "unseen" years), indicating it was trained on the full dataset. Reverted to
+# match the model's actual training data: the full processed dataset.
 
 X = df[FEATURES].fillna(0)
 y = df[TARGET]
@@ -149,8 +150,7 @@ if era_applicable:
             flag = " *** FLAGGED" if r["flagged"] else ""
             print(f"  {era:22s}  n={r['n']:5,}  MAE={r['mae']:.4f}  R²={r['r2']:.4f}  ratio={r['mae_ratio']:.2f}{flag}")
 else:
-    print("  Not applicable — model trained/tested only on 2020+ data, so every")
-    print("  row is already Post-6-6-6. No pre-2019 rows remain to compare against.")
+    print("  Not applicable — fewer than 20 observations in one of the era buckets.")
 
 # ── 4. Team ───────────────────────────────────────────────────────────────────
 
@@ -296,8 +296,8 @@ report = f"""# Fairness Audit Report
 
 **Project:** AFL Player Performance Predictor
 **Author:** Tia Qiu (ML Analyst/PM)
-**Date:** 2026-06-15
-**Model:** XGBRegressor — `models/xgb_goal_model.pkl` (v2, trained 2020–2025)
+**Date:** 2026-06-16
+**Model:** XGBRegressor — `models/xgb_goal_model.pkl` (trained on full 2012–2025 dataset)
 **Framework:** `docs/fairness_audit_framework.md`
 
 ---
@@ -370,10 +370,8 @@ report += """
 """
 if era_df.empty:
     report += (
-        "**Not applicable.** The model is trained and tested only on 2020+ data "
-        "(see `docs/model_card.md`), so every row in the test set is already "
-        "Post-6-6-6 — there are no pre-2019 rows left to compare against. "
-        "This audit dimension cannot be evaluated for this model version.\n"
+        "**Not applicable.** Fewer than 20 observations in one of the era "
+        "buckets for this test set.\n"
     )
 else:
     report += md_table(era_df, cols)

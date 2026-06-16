@@ -55,10 +55,12 @@ Decision support for AFL coaching departments:
 | Property | Detail |
 |----------|--------|
 | Source | Kaggle AFL Stats Dataset (`players.csv`, `stats.csv`) |
-| Coverage | 2020–2025 (model v2 retrained on recent data); full processed dataset contains 127,116 rows (2012–2025) |
-| Train / test split | Chronological 80/20 split (`shuffle=False`) on 2020–2025 subset |
+| Coverage | Full processed dataset: 127,116 rows (2012–2025). A 2020-2025-only retrain was reported but could not be verified — see note below. |
+| Train / test split | Chronological 80/20 split (`shuffle=False`) on the full dataset |
 | Preprocessing | Feature pipeline via `src/features/build_features.py`; missing values filled with 0 |
 | Data leakage controls | No future statistics used; chronological split prevents look-ahead bias |
+
+**Note on training data scope:** A drift-triggered retraining pipeline (`retrain_on_drift.sh`) was reported to have retrained the model on a 2020-2025-only subset, citing R² improvement from ~0.37 to 0.489. This could not be verified: (1) `src/models/train.py`, the only training script in this repo, has no year-filtering logic at all; (2) the deployed model's performance is consistent across 2012-2015, 2016-2019, and 2020-2025 test periods (no degradation on "excluded" years, which we would expect if the model had never seen that data). The evidence points to the model being trained on the full 2012-2025 dataset throughout, with no verified retrain ever having changed its training data scope.
 
 ---
 
@@ -68,12 +70,12 @@ Decision support for AFL coaching departments:
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **R²** | **0.4883** | Model explains ~49% of variance in goals scored |
-| **MAE** | **0.4174 goals** | Average prediction error under half a goal |
-| **RMSE** | **0.6020 goals** | |
-| Mean actual goals | 0.49 | Low baseline — most players score 0 or 1 goals per game |
+| **R²** | **0.4890** | Model explains ~49% of variance in goals scored |
+| **MAE** | **0.4293 goals** | Average prediction error under half a goal |
+| **RMSE** | **0.6262 goals** | |
+| Mean actual goals | 0.51 | Low baseline — most players score 0 or 1 goals per game |
 
-*Evaluated on chronological 20% holdout matching the model's actual 2020-2025 training window (2021–2025, n=10,965). Metrics computed 2026-06-16 from `models/xgb_goal_model.pkl`. (Previous figures of R²=0.4890/MAE=0.4293/n=25,424 were computed on an unfiltered 2012-2025 test split that didn't match the model's actual 2020-2025 training data — corrected here.)*
+*Evaluated on chronological 20% holdout of the full 2012-2025 dataset (≈2018–2025, n=25,424). Metrics computed 2026-06-16 directly from `models/xgb_goal_model.pkl`. (An earlier version of this doc briefly used different figures, R²=0.4883/MAE=0.4174/n=10,965, based on an assumption that the model was trained only on 2020-2025 data. That assumption did not hold up — see the Training Data note above — so these figures, matching the full dataset, are correct.)*
 
 ### Prediction Range by Position Profile
 
@@ -119,13 +121,13 @@ Based on HTE analysis from Course 1:
 |---------|---------|------|
 | Young rucks (<23) | Height effect 8× stronger than veterans | Model may overestimate young ruck potential |
 | Veteran forwards (>28) | Height and weight effects become *negative* | Model may underestimate experienced forwards |
-| Post-2019 data | 6-6-6 rule structurally changed ruck performance | Mixing pre/post data without era features causes bias |
+| Pre/post-2019 data | 6-6-6 rule structurally changed ruck performance | **Confirmed, not hypothetical** — fairness audit shows the model mixes pre- and post-rule-change data without era features, and the Pre-6-6-6 group is flagged for significantly higher error (see Fairness Audit Status below) |
 
 ### Fairness Audit Status
-- [x] Position-group performance parity audit — 3 flagged (Forward MAE 1.39×, Midfield R² gap 0.16, Ruck R² gap 0.165 not statistically significant)
-- [x] Team-group performance parity audit — 5 flagged (Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs)
-- [x] Age-segment performance parity audit — all PASS (Veteran segment excluded — fewer than 20 observations in the 2020+ test window)
-- [x] Rule-change era audit — N/A; model is trained/tested only on 2020+ data, so no pre-2019 rows remain to compare against
+- [x] Position-group performance parity audit — 2 flagged (Forward MAE 1.40×, Midfield R² gap 0.23)
+- [x] Team-group performance parity audit — 2 flagged (Carlton, Richmond)
+- [x] Age-segment performance parity audit — all PASS (Young, Prime, Veteran)
+- [x] Rule-change era audit — Pre-6-6-6 era flagged (MAE ratio 1.21×, statistically significant) — consistent with this model mixing pre- and post-rule-change data without era indicator features
 - [ ] Bias mitigation (position re-weighting, era indicator features) — future work
 
 See `reports/fairness_report.md` for full results and `docs/fairness_audit_framework.md` for methodology.
@@ -155,5 +157,5 @@ See `reports/fairness_report.md` for full results and `docs/fairness_audit_frame
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-02 | Course 1 — notebook-based, Streamlit dashboard |
-| 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD. Initial training on 2012–2025 data: R²=0.37 |
-| 2.1 | 2026-06 | Retrained on 2020–2025 data (recent seasons only): R²=0.4883, MAE=0.4174 — improvement of +32% in R² |
+| 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD. Initial reported R²=0.37 on this build was never independently re-verified. |
+| 2.1 | 2026-06 | A drift-triggered retrain on 2020-2025 data was reported, citing R² improvement to 0.489. **This could not be verified** — see Training Data note above. The currently deployed model (`models/xgb_goal_model.pkl`) verifiably achieves R²=0.4890, MAE=0.4293 on the full 2012-2025 dataset; whether this is meaningfully different from the "2.0" model or the same model re-evaluated is unconfirmed. |

@@ -19,12 +19,12 @@ This document defines the methodology for auditing the AFL Player Performance Pr
 ### 1. Position Groups
 The production model is a **single** XGBRegressor predicting `Goals` for every player, regardless of position — there are no separate per-position sub-models or targets. (The original Course 1 design used position-specific targets; that approach was not carried into production. See `docs/model_card.md`.) We audit whether the *quality* of this single model's predictions is equitable across positions.
 
-| Group | N (2020+ test set) | Primary metric |
-|-------|---------------------|----------------|
-| Forward | ~3,000 | Goals MAE |
-| Midfield | ~4,025 | Goals MAE |
-| Ruck | ~620 | Goals MAE |
-| Defender | ~3,318 | Goals MAE |
+| Group | N (full-dataset test set) | Primary metric |
+|-------|----------------------------|----------------|
+| Forward | ~8,136 | Goals MAE |
+| Midfield | ~8,503 | Goals MAE |
+| Ruck | ~1,634 | Goals MAE |
+| Defender | ~7,151 | Goals MAE |
 
 ### 2. Team Groups
 Predictions must not systematically favor or penalize players from certain teams. We check whether high-performing clubs' players are better-predicted than players from struggling clubs.
@@ -46,7 +46,7 @@ Pre- vs. post-rule-change predictions should be validated separately, since the 
 | Pre-6-6-6 | Before 2019 |
 | Post-6-6-6 | 2019 onwards |
 
-**Current status: not applicable.** The production model (v2.1) is trained only on 2020+ data, so every row in its test set is already Post-6-6-6 — there's no pre-2019 data left to compare against, and this dimension cannot be audited for this model version. It remains in this framework for completeness and would become relevant again if a future model version reintroduces pre-2019 data (e.g. with explicit era indicator features).
+**Current status: active and flagged.** The production model is trained on the full 2012-2025 dataset (a reported 2020+-only retrain could not be verified — see `docs/model_card.md`), so this dimension is fully testable. The Pre-6-6-6 group is currently flagged (MAE ratio 1.21×, statistically significant), consistent with the model mixing pre- and post-rule-change data without an explicit era indicator feature.
 
 ---
 
@@ -69,7 +69,7 @@ For any two players with similar observable statistics, their SHAP explanations 
 ## Audit Process
 
 ### Step 1 — Segment Performance Evaluation
-Run model predictions on the chronological 20% test holdout (currently 2021–2025, since the model trains only on 2020+ data). Compute MAE, R², RMSE for each audit group.
+Run model predictions on the chronological 20% test holdout of the full dataset (currently spans 2018–2025, n=25,424). Compute MAE, R², RMSE for each audit group.
 
 ```python
 # implemented in src/visualization/fairness_audit.py
@@ -106,7 +106,7 @@ If disparities are found, the following mitigations are evaluated in order:
 |-------|-----------|
 | High MAE for one position group | Re-weight training samples for that position |
 | Systematic over/under-prediction for an age group | Add age×position interaction feature |
-| Rule-era disparity | Not currently applicable (model trained only on 2020+ data). If pre-2019 data is reintroduced in a future version, ensure era indicator features are included; train separate era models if gap persists |
+| Rule-era disparity | Currently flagged for Pre-6-6-6. Add era indicator features (`Post666`, `RotEra`); train separate era models if gap persists after that |
 | SHAP shows irrelevant feature driving group predictions | Remove or regularize that feature; re-evaluate |
 
 ---
@@ -117,7 +117,7 @@ If disparities are found, the following mitigations are evaluated in order:
 |-------------|--------|----------|
 | Fairness audit report | Markdown | `reports/fairness_report.md` |
 | Per-group performance table | CSV | `reports/fairness_metrics.csv` |
-| Predictive parity comparison plots (MAE/R² by group) | PNG | `reports/figures/fairness/position_comparison.png`, `age_segment_comparison.png`, `team_comparison.png` |
+| Predictive parity comparison plots (MAE/R² by group) | PNG | `reports/figures/fairness/position_comparison.png`, `age_segment_comparison.png`, `era_comparison.png`, `team_comparison.png` |
 | SHAP individual fairness comparison plots (feature reliance by group) | PNG | `reports/figures/fairness/fairness_overall_primaryposition.png`, `fairness_overall_agesegment.png` |
 | Corrected model (if needed) | MLflow run | MLflow registry |
 

@@ -43,8 +43,8 @@ Use cases: pre-game lineup selection, in-game substitution, opponent weakness an
 **Target variable:** Goals per player per game
 - Mean = 0.51 goals | Most players score 0 or 1 per game — highly skewed
 
-**Train/test split:** Chronological 80/20 (no shuffle) to prevent look-ahead bias
-- Training: 2020–2022 | Test: 2023–2025
+**Train/test split:** Chronological 80/20 (no shuffle) on the full dataset, to prevent look-ahead bias
+- Train: 101,692 rows (2012–2025) | Test: 25,424 rows (2018–2025, most recent 20% by row order)
 
 ---
 
@@ -105,7 +105,7 @@ Each component is independently deployable, version-controlled, and observable.
 ## SLIDE 7 — Feature Engineering (Continued)
 **Causal-informed feature construction**
 - Age × position interaction terms from Course 1 HTE analysis inform which feature combinations to monitor
-- Era flag logic: model trained on 2020–2025 only — post-6-6-6 era data — to avoid structural shift
+- No explicit era indicator feature yet — model trains on the full 2012–2025 dataset, spanning both pre- and post-6-6-6 rule eras (see Fairness Audit, slide 19, for the resulting Pre-6-6-6 fairness flag)
 
 **Data leakage controls:**
 - Chronological split (`shuffle=False`) — no future stats leak into training
@@ -140,14 +140,15 @@ Each component is independently deployable, version-controlled, and observable.
 - Objective: minimize MAE on chronological validation fold
 - Best trial selected and registered to MLflow Model Registry
 
-**Version history:**
+**Current verified performance:**
 
-| Version | Training Data | R² | MAE |
-|---------|--------------|-----|-----|
-| v2.0 | 2012–2025 | 0.37 | — |
-| v2.1 (current) | 2020–2025 | **0.4883** | **0.4174** |
+| Metric | Value |
+|--------|-------|
+| R² | **0.4890** |
+| MAE | **0.4293** |
+| Training data | Full dataset, 2012–2025 (101,692 rows) |
 
-v2.1 retrained on recent seasons only → **+32% improvement in R²** by removing out-of-distribution pre-2019 data.
+A drift-triggered retrain on a 2020-2025-only subset was reported (with a claimed improvement from R²=0.37), but this could not be verified — the training script has no year-filtering logic, and the model's performance is consistent across all years tested, including those it would have excluded. Treating the retraining claim as unconfirmed; the numbers above are independently verified directly from the deployed model file.
 
 ---
 
@@ -208,7 +209,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 **Sample response — POST /predict:**
 ```json
-{"predicted_goals": 2.1389, "model_version": "2.1"}
+{"predicted_goals": 2.1389, "model_version": "local"}
 ```
 
 **Deployment:**
@@ -294,32 +295,35 @@ Merge to main → Docker image rebuilt → API redeployed
 **Groups audited:**
 1. Primary Position (Forward / Midfield / Ruck / Defender)
 2. Age Segment (Young <23 / Prime 23–28 / Veteran >28)
-3. Team (18 AFL clubs)
+3. Rule-change Era (Pre-6-6-6 <2019 / Post-6-6-6 2019+)
+4. Team (18 AFL clubs)
 
-**Flagging thresholds (adapted from industry fairness standards):**
+**Flagging thresholds (project-defined, informed by common ML fairness practice):**
 - MAE ratio > 1.3× overall → group is harder to predict accurately
 - R² gap > 0.10 vs overall → model explains much less variance for this group
 - Statistical significance: Mann-Whitney U test, p < 0.05
 
-**Test set:** Chronological 20% holdout, n = 10,965 observations (2021–2025) — matches the model's actual 2020+ training window
+**Test set:** Chronological 20% holdout, n = 25,424 observations (2018–2025)
 
 ---
 
 ## SLIDE 19 — Fairness Audit: Results
-**Overall model:** MAE = 0.4174 | R² = 0.4883
+**Overall model:** MAE = 0.4293 | R² = 0.4890
 
 | Group | Result | Key Finding |
 |-------|--------|-------------|
-| Forward | FLAGGED | MAE ratio = 1.39× — forwards harder to predict precisely |
-| Midfield | FLAGGED | R² gap = 0.16 — model explains much less midfield variance |
-| Ruck | FLAGGED | R² gap = 0.165 (overperforms average) — not statistically significant, likely small-sample noise (n=619) |
+| Forward | FLAGGED | MAE ratio = 1.40× — forwards harder to predict precisely |
+| Midfield | FLAGGED | R² gap = 0.23 — model explains much less midfield variance |
+| Ruck | PASS | — |
 | Defender | PASS | — |
-| Young / Prime | PASS (both) | Age parity holds; Veteran segment excluded — too few observations (<20) in this smaller window |
-| Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs | FLAGGED | Unusual player profiles under-represented in training |
+| Young / Prime / Veteran | PASS (all 3) | Age parity holds despite Course 1 HTE findings |
+| Pre-6-6-6 era | FLAGGED | MAE ratio = 1.21× — model trained on a mix of pre/post rule-change data with no era indicator feature |
+| Carlton, Richmond | FLAGGED | Unusual player profiles under-represented in training |
+| 13 other teams | PASS | No significant disparity |
 
-**Total flagged: 8 groups across 24 tested**
+**Total flagged: 5 groups across 27 tested**
 
-**Recommended mitigations:** Re-weight Forward/Midfield training samples · Investigate Ruck sample size before acting on this flag · Re-audit after next retraining
+**Recommended mitigations:** Re-weight Forward/Midfield training samples · Add era indicator features (`Post666`) to address the Pre-6-6-6 flag · Re-audit after next retraining
 
 ---
 
@@ -360,11 +364,11 @@ Current status: **Feature drift only (Weight, moderate)**. No concept or target 
 
 | KPI | Target | Achieved |
 |-----|--------|----------|
-| Model R² | ≥ 0.40 | **0.4883** ✓ |
+| Model R² | ≥ 0.40 | **0.4890** ✓ |
 | API latency | < 200ms | < 200ms ✓ |
 | Test suite | ≥ 80% pass rate | 41/41 (100%) ✓ |
 | Explainability | Per-prediction SHAP | Live endpoint ✓ |
-| Fairness audit | All groups evaluated | 24 groups tested ✓ |
+| Fairness audit | All groups evaluated | 27 groups tested ✓ |
 | Drift monitoring | PSI/KS live | Live endpoint ✓ |
 | CI/CD | Automated on PR | GitHub Actions ✓ |
 
@@ -397,11 +401,11 @@ Current status: **Feature drift only (Weight, moderate)**. No concept or target 
 | Column order matters in production | Python dict.pop() + re-add moves keys to end — breaks feature alignment silently |
 | SHAP needs a background dataset | Same row as prediction → all SHAP = 0.0; 50 training rows required |
 | Chronological splits are non-negotiable | Random splits produce inflated R²; time series data requires time-aware splits |
-| Retraining on recent data beats more data | v2.0 (2012–2025): R²=0.37 → v2.1 (2020–2025): R²=0.49 |
+| Verify retraining claims against the actual model, not just a reported summary | A reported "retrain on 2020-2025 data" turned out not to be backed by the training code or the model's actual behavior across years — always cross-check claimed pipeline changes against the deployed artifact |
 
 **Next steps:**
-- Position-specific sub-models (Forward model, Ruck model) to address Midfield R²=0.33
-- Bring pre-2019 data back in with era indicator features (`Post666`, `RotEra`) so the model can learn from the full rule-change history without the bias that caused us to drop it
+- Position-specific sub-models (Forward model, Ruck model) to address Midfield's low R² (0.26)
+- Add era indicator features (`Post666`, `RotEra`) so the model can explicitly account for the 6-6-6 rule change, addressing the Pre-6-6-6 fairness flag
 - Causal interaction terms (height×ruck, age×position) as production features
 - Expand to women's AFL (AFLW) once labelled data is available
 

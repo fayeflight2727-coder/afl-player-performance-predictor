@@ -2,8 +2,8 @@
 
 **Project:** AFL Player Performance Predictor
 **Author:** Tia Qiu (ML Analyst/PM)
-**Date:** 2026-06-15
-**Model:** XGBRegressor — `models/xgb_goal_model.pkl` (v2, trained 2020–2025)
+**Date:** 2026-06-16
+**Model:** XGBRegressor — `models/xgb_goal_model.pkl` (trained on full 2012–2025 dataset)
 **Framework:** `docs/fairness_audit_framework.md`
 
 ---
@@ -12,10 +12,10 @@
 
 | Metric | Value |
 |--------|-------|
-| MAE | 0.4174 goals |
-| RMSE | 0.6020 goals |
-| R² | 0.4883 |
-| Test set | 10,965 player-game observations (2021–2025) |
+| MAE | 0.4293 goals |
+| RMSE | 0.6262 goals |
+| R² | 0.4890 |
+| Test set | 25,424 player-game observations (2018–2025) |
 
 **Flagging thresholds:** MAE ratio > 1.3×  |  R² gap > 0.10  |  p < 0.05 (Mann-Whitney U)
 
@@ -25,10 +25,10 @@
 
 | group | n | mae | r2 | mae_ratio | r2_gap | p_value | flagged |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Forward | 3003 | 0.5800 | 0.4513 | 1.3900 | 0.0370 | 0.0000 | **YES** |
-| Midfield | 4025 | 0.4196 | 0.3287 | 1.0050 | 0.1600 | 0.0000 | **YES** |
-| Ruck | 619 | 0.3989 | 0.6530 | 0.9560 | -0.1650 | 0.1961 | **YES** |
-| Defender | 3318 | 0.2710 | 0.3987 | 0.6490 | 0.0900 | 0.0000 | no |
+| Forward | 8136 | 0.6011 | 0.4618 | 1.4000 | 0.0270 | 0.0000 | **YES** |
+| Midfield | 8503 | 0.4291 | 0.2594 | 1.0000 | 0.2300 | 0.0000 | **YES** |
+| Ruck | 1634 | 0.4196 | 0.5465 | 0.9770 | -0.0580 | 0.1760 | no |
+| Defender | 7151 | 0.2363 | 0.4078 | 0.5500 | 0.0810 | 0.0000 | no |
 
 ![Position group comparison](figures/fairness/position_comparison.png)
 
@@ -39,9 +39,8 @@
 HitOuts stands out distinctly for Ruck and barely registers for other positions — expected, since it's the position-defining stat, not a fairness concern. All other features show broadly consistent reliance across positions, including MarksInside50 (the dominant feature for every position, not just Forward).
 
 **Findings:**
-- **Forward** flagged: MAE ratio=1.39×, R² gap=0.037 — statistically significant (p=0.0000).
-- **Midfield** flagged: MAE ratio=1.00×, R² gap=0.160 — statistically significant (p=0.0000).
-- **Ruck** flagged: MAE ratio=0.96×, R² gap=-0.165 — not statistically significant.
+- **Forward** flagged: MAE ratio=1.40×, R² gap=0.027 — statistically significant (p=0.0000).
+- **Midfield** flagged: MAE ratio=1.00×, R² gap=0.230 — statistically significant (p=0.0000).
 
 ---
 
@@ -49,8 +48,9 @@ HitOuts stands out distinctly for Ruck and barely registers for other positions 
 
 | group | n | mae | r2 | mae_ratio | r2_gap | p_value | flagged |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Young (<23) | 8175 | 0.4263 | 0.4816 | 1.0210 | 0.0070 | 0.0000 | no |
-| Prime (23-28) | 2783 | 0.3913 | 0.5095 | 0.9370 | -0.0210 | 0.0000 | no |
+| Young (<23) | 13845 | 0.4274 | 0.4586 | 0.9960 | 0.0300 | 0.0042 | no |
+| Prime (23-28) | 11055 | 0.4288 | 0.5188 | 0.9990 | -0.0300 | 0.0001 | no |
+| Veteran (>28) | 524 | 0.4910 | 0.5105 | 1.1440 | -0.0210 | 0.0004 | no |
 
 ![Age segment comparison](figures/fairness/age_segment_comparison.png)
 
@@ -69,7 +69,15 @@ All three age segments — including Veteran, which has too few rows for the for
 
 ## 3. Rule-Change Era Audit
 
-**Not applicable.** The model is trained and tested only on 2020+ data (see `docs/model_card.md`), so every row in the test set is already Post-6-6-6 — there are no pre-2019 rows left to compare against. This audit dimension cannot be evaluated for this model version.
+| group | n | mae | r2 | mae_ratio | r2_gap | p_value | flagged |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Pre-6-6-6 (<2019) | 568 | 0.5176 | 0.3316 | 1.2060 | 0.1570 | 0.0059 | **YES** |
+| Post-6-6-6 (2019+) | 24856 | 0.4273 | 0.4928 | 0.9950 | -0.0040 | 0.0059 | no |
+
+![Rule-change era comparison](figures/fairness/era_comparison.png)
+
+**Findings:**
+- **Pre-6-6-6 (<2019)** flagged: MAE ratio=1.21× — statistically significant (p=0.0059).
 
 ---
 
@@ -78,17 +86,17 @@ All three age segments — including Veteran, which has too few rows for the for
 | | |
 |--|--|
 | Teams audited | 18 |
-| Best-predicted | West Coast (MAE=0.3236) |
-| Worst-predicted | Collingwood (MAE=0.4933, ratio=1.18×) |
-| Teams flagged | 5 |
-| Flagged teams | Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs |
+| Best-predicted | Greater Western Sydney (MAE=0.3576) |
+| Worst-predicted | Western Bulldogs (MAE=0.5012, ratio=1.17×) |
+| Teams flagged | 2 |
+| Flagged teams | Carlton, Richmond |
 
 Full team results in `reports/fairness_metrics.csv`.
 
 ![Team comparison](figures/fairness/team_comparison.png)
 
 **Findings:**
-- 5 team(s) flagged. Recommend checking whether flagged teams have unusual player profiles under-represented in training data.
+- 2 team(s) flagged. Recommend checking whether flagged teams have unusual player profiles under-represented in training data.
 
 ---
 
@@ -96,12 +104,12 @@ Full team results in `reports/fairness_metrics.csv`.
 
 | Audit Group | Groups Tested | Flagged | Result |
 |-------------|--------------|---------|--------|
-| Position | 4 | 3 | NEEDS REVIEW |
-| Age Segment | 2 | 0 | PASS |
-| Rule-Change Era | 0 | 0 | N/A — no pre-2019 data in test set |
-| Team | 18 | 5 | NEEDS REVIEW |
+| Position | 4 | 2 | NEEDS REVIEW |
+| Age Segment | 3 | 0 | PASS |
+| Rule-Change Era | 2 | 1 | NEEDS REVIEW |
+| Team | 18 | 2 | NEEDS REVIEW |
 
-**Total flagged groups: 8**
+**Total flagged groups: 5**
 
 ---
 

@@ -132,7 +132,7 @@ What needs to be done and why.
 - XGBRegressor, n_estimators=300, max_depth=5, lr=0.05
 - Hyperparameter tuning via Optuna/Hyperopt
 - MLflow experiment tracking: AFL_Goal_Prediction, model registry
-- v2.1 retraining: 2020–2025 data → R² improved 0.37 → 0.49 (+32%)
+- Current verified performance: R²=0.4890, MAE=0.4293 on the full 2012–2025 dataset (a reported "2020-2025 retrain" could not be verified — flag this as unconfirmed if asked)
 
 **Slides 11–12 — Explainability (SHAP)**
 - Slide 11: What is SHAP — baseline vs. prediction, push/pull of features
@@ -152,8 +152,8 @@ What needs to be done and why.
 - 41 smoke tests covering all endpoints and explainability module
 
 **Slides 18–19 — Fairness & Ethical AI**
-- Slide 18: Audit methodology — 4 groups (position, age, era, team), thresholds MAE ratio >1.3×, R² gap >0.10. Test set matches the model's actual training window (2020+).
-- Slide 19: Results — 8 flagged groups: Forward (MAE 1.39×), Midfield (R² gap 0.16), Ruck (R² gap 0.165, not significant), Carlton, Fremantle, Port Adelaide, West Coast, Western Bulldogs. Age segments all PASS. Rule-change era audit N/A (no pre-2019 data remains once filtered to match training). Recommended mitigations.
+- Slide 18: Audit methodology — 4 groups (position, age, era, team), thresholds MAE ratio >1.3×, R² gap >0.10. Test set is the full dataset's chronological 20% holdout (n=25,424).
+- Slide 19: Results — 5 flagged groups: Forward (MAE 1.40×), Midfield (R² gap 0.23), Pre-6-6-6 era (MAE ratio 1.21×), Carlton, Richmond. Age segments and Ruck/Defender all PASS. Recommended mitigations.
 
 **Slides 20–21 — Monitoring & Drift**
 - PSI/KS tests on 9 features comparing train (≤2022) vs current (2023–2025)
