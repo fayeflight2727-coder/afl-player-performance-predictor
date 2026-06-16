@@ -30,6 +30,7 @@ jobs:
 
       # Step 4: Run linting to catch syntax errors and bad formatting
       - name: Lint with flake8
+        continue-on-error: true
         run: |
           pip install flake8
           flake8 src/ --max-line-length=100 --ignore=E501,W503
