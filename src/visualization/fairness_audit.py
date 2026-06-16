@@ -5,6 +5,7 @@ Evaluates predictive parity across position, age segment, era, and team groups.
 Outputs:
     reports/fairness_report.md
     reports/fairness_metrics.csv
+    reports/figures/fairness/*.png
 
 Usage:
     python src/visualization/fairness_audit.py
@@ -13,6 +14,9 @@ Usage:
 import joblib
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend for server use
+import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy import stats
 from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error
@@ -35,6 +39,8 @@ R2_GAP_THRESHOLD     = 0.10
 PVALUE_THRESHOLD     = 0.05
 
 Path("reports").mkdir(exist_ok=True)
+FIGURES_DIR = Path("reports/figures/fairness")
+FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Load model and data ───────────────────────────────────────────────────────
 
@@ -154,6 +160,45 @@ metrics_df = pd.DataFrame(results)
 metrics_df.to_csv("reports/fairness_metrics.csv", index=False)
 print(f"\nSaved reports/fairness_metrics.csv ({len(metrics_df)} rows)")
 
+# ── Comparison plots ────────────────────────────────────────────────────────
+
+
+def plot_group_comparison(df, title, filename, horizontal=False):
+    """Bar chart comparing MAE and R² across groups, with overall reference lines.
+    Flagged groups are highlighted in red, passing groups in green.
+    """
+    if df.empty:
+        return
+    df = df.sort_values("mae", ascending=horizontal)
+    colors = ["#e74c3c" if f else "#2ecc71" for f in df["flagged"]]
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, max(4, 0.35 * len(df)) if horizontal else 5))
+
+    if horizontal:
+        axes[0].barh(df["group"], df["mae"], color=colors)
+        axes[0].axvline(overall_mae, color="black", linestyle="--", linewidth=1, label=f"Overall MAE={overall_mae:.3f}")
+        axes[1].barh(df["group"], df["r2"], color=colors)
+        axes[1].axvline(overall_r2, color="black", linestyle="--", linewidth=1, label=f"Overall R²={overall_r2:.3f}")
+    else:
+        axes[0].bar(df["group"], df["mae"], color=colors)
+        axes[0].axhline(overall_mae, color="black", linestyle="--", linewidth=1, label=f"Overall MAE={overall_mae:.3f}")
+        axes[1].bar(df["group"], df["r2"], color=colors)
+        axes[1].axhline(overall_r2, color="black", linestyle="--", linewidth=1, label=f"Overall R²={overall_r2:.3f}")
+        for ax in axes:
+            ax.tick_params(axis="x", rotation=30)
+
+    axes[0].set_title("MAE by group (lower is better)")
+    axes[0].legend(fontsize=8)
+    axes[1].set_title("R² by group (higher is better)")
+    axes[1].legend(fontsize=8)
+    fig.suptitle(title)
+    plt.tight_layout()
+    path = FIGURES_DIR / filename
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved {path}")
+
+
 # ── Write report ──────────────────────────────────────────────────────────────
 
 def md_table(df, cols):
@@ -184,6 +229,12 @@ era_flagged      = era_df[era_df["flagged"]]
 n_teams_flagged  = len(team_df[team_df["flagged"]]) if len(team_df) > 0 else 0
 flagged_teams    = ", ".join(team_df[team_df["flagged"]]["group"].tolist()) if len(team_df) > 0 else "None"
 
+print("\nGenerating comparison plots...")
+plot_group_comparison(pos_df,  "Fairness Audit — Position Group Comparison",      "position_comparison.png")
+plot_group_comparison(age_df,  "Fairness Audit — Age Segment Comparison",         "age_segment_comparison.png")
+plot_group_comparison(era_df,  "Fairness Audit — Rule-Change Era Comparison",     "era_comparison.png")
+plot_group_comparison(team_df, "Fairness Audit — Team Comparison (18 AFL Clubs)", "team_comparison.png", horizontal=True)
+
 cols = ["group", "n", "mae", "r2", "mae_ratio", "r2_gap", "p_value", "flagged"]
 
 report = f"""# Fairness Audit Report
@@ -213,6 +264,8 @@ report = f"""# Fairness Audit Report
 
 {md_table(pos_df, cols)}
 
+![Position group comparison](figures/fairness/position_comparison.png)
+
 **Findings:**
 """
 if len(pos_flagged) == 0:
@@ -228,6 +281,8 @@ report += f"""
 ## 2. Age Segment Audit
 
 {md_table(age_df, cols)}
+
+![Age segment comparison](figures/fairness/age_segment_comparison.png)
 
 **Findings:**
 """
@@ -247,7 +302,8 @@ report += """
 
 """
 report += md_table(era_df, cols)
-report += "\n\n**Findings:**\n"
+report += "\n\n![Rule-change era comparison](figures/fairness/era_comparison.png)\n"
+report += "\n**Findings:**\n"
 if len(era_flagged) == 0:
     report += "- No era groups exceed thresholds. The model generalises across pre- and post-6-6-6 rule eras.\n"
 else:
@@ -272,6 +328,8 @@ if len(team_df) > 0:
 | Flagged teams | {flagged_teams} |
 
 Full team results in `reports/fairness_metrics.csv`.
+
+![Team comparison](figures/fairness/team_comparison.png)
 
 **Findings:**
 """
