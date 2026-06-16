@@ -68,12 +68,12 @@ Decision support for AFL coaching departments:
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **R²** | **0.4890** | Model explains ~49% of variance in goals scored |
-| **MAE** | **0.4293 goals** | Average prediction error under half a goal |
-| **RMSE** | **0.6262 goals** | |
-| Mean actual goals | 0.51 | Low baseline — most players score 0 or 1 goals per game |
+| **R²** | **0.4883** | Model explains ~49% of variance in goals scored |
+| **MAE** | **0.4174 goals** | Average prediction error under half a goal |
+| **RMSE** | **0.6020 goals** | |
+| Mean actual goals | 0.49 | Low baseline — most players score 0 or 1 goals per game |
 
-*Evaluated on chronological 20% holdout (≈2018–2025, n=25,424). Metrics computed 2026-06-14 from `models/xgb_goal_model.pkl`.*
+*Evaluated on chronological 20% holdout matching the model's actual 2020-2025 training window (2021–2025, n=10,965). Metrics computed 2026-06-16 from `models/xgb_goal_model.pkl`. (Previous figures of R²=0.4890/MAE=0.4293/n=25,424 were computed on an unfiltered 2012-2025 test split that didn't match the model's actual 2020-2025 training data — corrected here.)*
 
 ### Prediction Range by Position Profile
 
@@ -156,4 +156,4 @@ See `reports/fairness_report.md` for full results and `docs/fairness_audit_frame
 |---------|------|---------|
 | 1.0 | 2026-02 | Course 1 — notebook-based, Streamlit dashboard |
 | 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD. Initial training on 2012–2025 data: R²=0.37 |
-| 2.1 | 2026-06 | Retrained on 2020–2025 data (recent seasons only): R²=0.489, MAE=0.429 — improvement of +32% in R² |
+| 2.1 | 2026-06 | Retrained on 2020–2025 data (recent seasons only): R²=0.4883, MAE=0.4174 — improvement of +32% in R² |

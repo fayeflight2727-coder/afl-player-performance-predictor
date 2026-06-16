@@ -145,7 +145,7 @@ Each component is independently deployable, version-controlled, and observable.
 | Version | Training Data | R² | MAE |
 |---------|--------------|-----|-----|
 | v2.0 | 2012–2025 | 0.37 | — |
-| v2.1 (current) | 2020–2025 | **0.489** | **0.4293** |
+| v2.1 (current) | 2020–2025 | **0.4883** | **0.4174** |
 
 v2.1 retrained on recent seasons only → **+32% improvement in R²** by removing out-of-distribution pre-2019 data.
 
@@ -362,7 +362,7 @@ Current status: **Feature drift only (Weight, moderate)**. No concept or target 
 
 | KPI | Target | Achieved |
 |-----|--------|----------|
-| Model R² | ≥ 0.40 | **0.489** ✓ |
+| Model R² | ≥ 0.40 | **0.4883** ✓ |
 | API latency | < 200ms | < 200ms ✓ |
 | Test suite | ≥ 80% pass rate | 41/41 (100%) ✓ |
 | Explainability | Per-prediction SHAP | Live endpoint ✓ |
