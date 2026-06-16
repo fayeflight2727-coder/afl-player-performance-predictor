@@ -134,28 +134,31 @@ What needs to be done and why.
 - MLflow experiment tracking: AFL_Goal_Prediction, model registry
 - v2.1 retraining: 2020–2025 data → R² improved 0.37 → 0.49 (+32%)
 
-**Slides 12–14 — Explainability (SHAP)**
-- Slide 12: What is SHAP — baseline vs. prediction, push/pull of features
-- Slide 13: Forward example — MarksInside50 adds +1.75 goals (dominant feature, confirms Course 1 coeff +9.75)
-- Slide 14: API endpoint POST /predict/explain → JSON with top 10 SHAP features per prediction
+**Slides 11–12 — Explainability (SHAP)**
+- Slide 11: What is SHAP — baseline vs. prediction, push/pull of features
+- Slide 12: Forward example — MarksInside50 adds +1.75 goals (dominant feature, confirms Course 1 coeff +9.75)
 
-**Slides 15–16 — Fairness & Ethical AI**
-- Slide 15: Audit methodology — 4 groups (position, age, era, team), thresholds MAE ratio >1.3×, R² gap >0.10
-- Slide 16: Results — 5 flagged groups: Forward (MAE 1.40×), Midfield (R² gap 0.23), Pre-2019 era, Carlton, Richmond. Age segments all PASS. Recommended mitigations.
+**Slides 13–15 — API & Deployment**
+- Slide 13: FastAPI endpoints — POST /predict, POST /predict/explain, GET /monitoring/drift
+- Slide 14: Live API — POST /predict/explain JSON response with top 10 SHAP features per prediction
+- Slide 15: Position profiles — Forward 2.14, Midfield 0.53, Ruck 0.22, Defender 0.05 (no explicit routing)
 
-**Slides 17–18 — API & Deployment**
-- FastAPI endpoints: POST /predict, POST /predict/explain, GET /monitoring/drift
+**Slide 16 — Solution Architecture: Deployment View**
 - Docker container, MLflow model registry (local fallback to .pkl)
-- Response example: predicted_goals + model_version
+- GitHub Actions runs lint + 41 smoke tests on every PR
 
-**Slides 19–20 — Monitoring & Drift**
+**Slide 17 — CI/CD Pipeline**
+- GitHub Actions: lint + unit tests on every PR, deploy on merge to main
+- 41 smoke tests covering all endpoints and explainability module
+
+**Slides 18–19 — Fairness & Ethical AI**
+- Slide 18: Audit methodology — 4 groups (position, age, era, team), thresholds MAE ratio >1.3×, R² gap >0.10
+- Slide 19: Results — 5 flagged groups: Forward (MAE 1.40×), Midfield (R² gap 0.23), Pre-2019 era, Carlton, Richmond. Age segments all PASS. Recommended mitigations.
+
+**Slides 20–21 — Monitoring & Drift**
 - PSI/KS tests on 9 features comparing train (≤2022) vs current (2023–2025)
 - Weight drift detected (PSI=0.148, moderate) — players getting lighter in modern game
 - Retraining trigger: PSI > 0.25 OR R² drops below threshold
-
-**Slide 21 — CI/CD Pipeline**
-- GitHub Actions: lint + unit tests on every PR, deploy on merge to main
-- 41 smoke tests covering all endpoints and explainability module
 
 **Slides 22–23 — Business Value & Impact**
 - Slide 22: KPIs met — API latency <200ms, 41 tests passing, drift monitoring live
