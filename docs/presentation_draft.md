@@ -171,12 +171,12 @@ For any single prediction:
 predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(Age)
 ```
 
-- **Baseline** = average prediction over background dataset (≈ 0.43 goals)
+- **Baseline** = average prediction over the training set, as captured by the trained tree structure (≈ 0.56 goals)
 - Each feature's SHAP value = its contribution pushing prediction up or down
 - TreeExplainer: exact SHAP values for XGBoost (no approximation)
 
 **Why it matters for coaches:**
-- Not just "2.14 goals predicted" — but *why*: "MarksInside50 added +1.75 goals, Behinds subtracted −0.09"
+- Not just "2.14 goals predicted" — but *why*: "MarksInside50 added +1.57 goals, Marks subtracted −0.06"
 - Actionable: identify which player attributes to target in selection and training plans
 
 ---
@@ -186,13 +186,13 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 | Feature | SHAP Value | Direction |
 |---------|-----------|-----------|
-| MarksInside50 | +1.747 | ↑ Goals |
-| Behinds | −0.086 | ↓ Goals |
-| Marks | −0.079 | ↓ Goals |
-| GoalAssists | −0.060 | ↓ Goals |
-| Disposals | +0.049 | ↑ Goals |
+| MarksInside50 | +1.567 | ↑ Goals |
+| Marks | −0.055 | ↓ Goals |
+| Behinds | +0.053 | ↑ Goals |
+| Disposals | +0.052 | ↑ Goals |
+| GoalAssists | −0.043 | ↓ Goals |
 
-- **Baseline:** 0.4281 goals
+- **Baseline:** 0.5557 goals
 - **Predicted:** 2.1389 goals
 - **MarksInside50 dominates** — consistent with Course 1 LassoCV coefficient (+9.75); every other feature contributes under ±0.1 goals
 
@@ -227,12 +227,12 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
   "player_id": "api_request",
   "position": "Forward",
   "target": "Goals",
-  "baseline": 0.4281,
+  "baseline": 0.5557,
   "prediction": 2.1389,
   "top_features": [
-    {"feature": "MarksInside50", "shap_value": 1.7470, "direction": "positive"},
-    {"feature": "Behinds",       "shap_value": -0.0856, "direction": "negative"},
-    {"feature": "Marks",         "shap_value": -0.0788, "direction": "negative"},
+    {"feature": "MarksInside50", "shap_value": 1.5671, "direction": "positive"},
+    {"feature": "Marks",         "shap_value": -0.0551, "direction": "negative"},
+    {"feature": "Behinds",       "shap_value": 0.0534, "direction": "positive"},
     ...
   ]
 }

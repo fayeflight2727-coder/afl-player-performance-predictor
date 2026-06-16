@@ -188,26 +188,26 @@ Request body is identical to `POST /predict` (see schema above).
   "player_id": "api_request",
   "position": "Forward",
   "target": "Goals",
-  "baseline": 0.4281,
+  "baseline": 0.5557,
   "prediction": 2.1389,
   "top_features": [
-    {"feature": "MarksInside50",  "value": 3.0,  "shap_value":  1.7470, "direction": "positive"},
-    {"feature": "Behinds",        "value": 1.0,  "shap_value": -0.0856, "direction": "negative"},
-    {"feature": "Marks",          "value": 6.0,  "shap_value": -0.0788, "direction": "negative"},
-    {"feature": "GoalAssists",    "value": 1.0,  "shap_value": -0.0597, "direction": "negative"},
-    {"feature": "Disposals",      "value": 22.0, "shap_value":  0.0494, "direction": "positive"},
-    {"feature": "Inside50s",      "value": 5.0,  "shap_value":  0.0370, "direction": "positive"},
-    {"feature": "%Played",        "value": 85.0, "shap_value":  0.0350, "direction": "positive"},
-    {"feature": "Frees",          "value": 1.0,  "shap_value":  0.0315, "direction": "positive"},
-    {"feature": "ContestedMarks", "value": 1.0,  "shap_value":  0.0178, "direction": "positive"},
-    {"feature": "AvgTemp",        "value": 18.5, "shap_value":  0.0171, "direction": "positive"}
+    {"feature": "MarksInside50",  "value": 3.0,  "shap_value":  1.5671, "direction": "positive"},
+    {"feature": "Marks",          "value": 6.0,  "shap_value": -0.0551, "direction": "negative"},
+    {"feature": "Behinds",        "value": 1.0,  "shap_value":  0.0534, "direction": "positive"},
+    {"feature": "Disposals",      "value": 22.0, "shap_value":  0.0516, "direction": "positive"},
+    {"feature": "GoalAssists",    "value": 1.0,  "shap_value": -0.0426, "direction": "negative"},
+    {"feature": "Inside50s",      "value": 5.0,  "shap_value":  0.0414, "direction": "positive"},
+    {"feature": "Weight",         "value": 87.0, "shap_value": -0.0331, "direction": "negative"},
+    {"feature": "Rebounds",       "value": 1.0,  "shap_value": -0.0249, "direction": "negative"},
+    {"feature": "Frees",          "value": 1.0,  "shap_value":  0.0236, "direction": "positive"},
+    {"feature": "Clearances",     "value": 3.0,  "shap_value": -0.0230, "direction": "negative"}
   ]
 }
 ```
 
-**How to read this:** `baseline` (0.4281) is the average goals across the training set. Each `shap_value` shows how much that feature pushes the prediction above or below baseline. Here `MarksInside50=3` adds +1.747 goals — the dominant driver for this Forward, consistent with Course 1 findings (coefficient +9.75). `baseline + sum(shap_values) ≈ prediction`.
+**How to read this:** `baseline` (0.5557) is the model's expected output averaged over the training set, as computed by SHAP TreeExplainer from the trained tree structure. Each `shap_value` shows how much that feature pushes the prediction above or below baseline. Here `MarksInside50=3` adds +1.567 goals — the dominant driver for this Forward, consistent with Course 1 findings (coefficient +9.75). `baseline + sum(shap_values) ≈ prediction`.
 
-**Background dataset:** Uses 50 randomly sampled rows from training data (Year ≤ 2022) as the SHAP reference population.
+**Explainer:** Uses SHAP `TreeExplainer`, which computes exact (not approximated) Shapley values directly from the model's tree structure — no background dataset is needed for the baseline itself. A 50-row sample from training data (Year ≤ 2022) is still passed through for interface compatibility but is not used by TreeExplainer's calculation.
 
 **Implemented in:** `src/visualization/explainability.py` → `generate_explanation_dict()`
 

@@ -89,8 +89,18 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
     input_dict = player.dict()
     input_df = pd.DataFrame([input_dict]).rename(columns={"Percent_Played": "%Played"})
     try:
-        wrapped = ModelWrapper(get_model())
         from src.visualization.explainability import generate_explanation_dict
+
+        # NOTE: pass the raw model here, not ModelWrapper. get_explainer() in
+        # explainability.py picks the SHAP explainer by checking
+        # type(model).__name__ against strings like "xgb"/"xgboost" -- a
+        # ModelWrapper-wrapped object's type name is "ModelWrapper", which
+        # matches none of those checks and silently falls through to the
+        # slow, approximate KernelExplainer fallback instead of the intended
+        # TreeExplainer. generate_explanation_dict() never calls model.predict()
+        # directly (it reconstructs the prediction from baseline + sum(SHAP)),
+        # so ModelWrapper's string-output guard is not needed on this path.
+        raw_model = get_model()
 
         # Load background sample from training data so SHAP has a baseline to compare against.
         # Using the input row as its own background causes all SHAP values to be 0.0.
@@ -108,7 +118,7 @@ def predict_explain(player: PlayerInput, position: str = "Forward"):
         background_sample = background_df[model_features].dropna().sample(50, random_state=42)
 
         explanation = generate_explanation_dict(
-            model=wrapped,
+            model=raw_model,
             X_instance=input_df,
             X_background=background_sample,
             position=position,
