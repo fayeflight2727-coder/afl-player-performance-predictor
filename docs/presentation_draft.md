@@ -197,44 +197,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 ---
 
-## SLIDE 13 — Fairness Audit: Methodology
-**Ensuring the model treats all player groups equitably**
-
-**Groups audited:**
-1. Primary Position (Forward / Midfield / Ruck / Defender)
-2. Age Segment (Young <23 / Prime 23–28 / Veteran >28)
-3. Rule-change Era (Pre-6-6-6 <2019 / Post-6-6-6 2019+)
-4. Team (18 AFL clubs)
-
-**Flagging thresholds (adapted from industry fairness standards):**
-- MAE ratio > 1.3× overall → group is harder to predict accurately
-- R² gap > 0.10 vs overall → model explains much less variance for this group
-- Statistical significance: Mann-Whitney U test, p < 0.05
-
-**Test set:** Chronological 20% holdout, n = 25,424 observations
-
----
-
-## SLIDE 14 — Fairness Audit: Results
-**Overall model:** MAE = 0.4293 | R² = 0.489
-
-| Group | Result | Key Finding |
-|-------|--------|-------------|
-| Forward | FLAGGED | MAE ratio = 1.40× — forwards harder to predict precisely |
-| Midfield | FLAGGED | R² gap = 0.23 — model explains much less midfield variance |
-| Ruck | PASS | — |
-| Defender | PASS | — |
-| Young / Prime / Veteran | PASS (all 3) | Age parity holds despite Course 1 HTE findings |
-| Pre-6-6-6 era | FLAGGED | Out-of-distribution: model trained on 2020+ only |
-| Carlton, Richmond | FLAGGED | Unusual player profiles under-represented in training |
-
-**Total flagged: 5 groups across 27 tested**
-
-**Recommended mitigations:** Re-weight Forward/Midfield training samples · Add era indicator features (`Post666`) · Re-audit after next retraining
-
----
-
-## SLIDE 15 — API & Deployment
+## SLIDE 13 — API & Deployment
 **FastAPI — 3 production endpoints**
 
 | Endpoint | Method | Purpose |
@@ -255,7 +218,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 ---
 
-## SLIDE 16 — Explainability: Live API
+## SLIDE 14 — Explainability: Live API
 **Endpoint: POST /predict/explain**
 
 ```json
@@ -278,7 +241,7 @@ Available for all 4 position profiles.
 
 ---
 
-## SLIDE 17 — API & Deployment (Position Profiles)
+## SLIDE 15 — API & Deployment (Position Profiles)
 **Model handles all 4 positions without explicit routing**
 
 | Position | Predicted Goals | Key Driver |
@@ -292,7 +255,7 @@ The model implicitly learns positional patterns from the statistics themselves �
 
 ---
 
-## SLIDE 18 — Solution Architecture: Deployment View
+## SLIDE 16 — Solution Architecture: Deployment View
 **Docker + MLflow + GitHub Actions — production-ready infrastructure**
 
 - Model served inside a **Docker container** (reproducible, portable environment)
@@ -305,7 +268,7 @@ This infrastructure reflects the full ML production lifecycle: build → registe
 
 ---
 
-## SLIDE 19 — CI/CD Pipeline
+## SLIDE 17 — CI/CD Pipeline
 **Automated quality gate on every commit**
 
 ```
@@ -321,6 +284,43 @@ Merge to main → Docker image rebuilt → API redeployed
 - 41 tests total: health checks, schema validation, SHAP correctness, drift endpoint
 - `test_explainability.py`: pure unit tests using LinearRegression mock — runs in CI without Docker
 - Smoke tests skip automatically if API is not running (`@pytest.mark.skipif`)
+
+---
+
+## SLIDE 18 — Fairness Audit: Methodology
+**Ensuring the model treats all player groups equitably**
+
+**Groups audited:**
+1. Primary Position (Forward / Midfield / Ruck / Defender)
+2. Age Segment (Young <23 / Prime 23–28 / Veteran >28)
+3. Rule-change Era (Pre-6-6-6 <2019 / Post-6-6-6 2019+)
+4. Team (18 AFL clubs)
+
+**Flagging thresholds (adapted from industry fairness standards):**
+- MAE ratio > 1.3× overall → group is harder to predict accurately
+- R² gap > 0.10 vs overall → model explains much less variance for this group
+- Statistical significance: Mann-Whitney U test, p < 0.05
+
+**Test set:** Chronological 20% holdout, n = 25,424 observations
+
+---
+
+## SLIDE 19 — Fairness Audit: Results
+**Overall model:** MAE = 0.4293 | R² = 0.489
+
+| Group | Result | Key Finding |
+|-------|--------|-------------|
+| Forward | FLAGGED | MAE ratio = 1.40× — forwards harder to predict precisely |
+| Midfield | FLAGGED | R² gap = 0.23 — model explains much less midfield variance |
+| Ruck | PASS | — |
+| Defender | PASS | — |
+| Young / Prime / Veteran | PASS (all 3) | Age parity holds despite Course 1 HTE findings |
+| Pre-6-6-6 era | FLAGGED | Out-of-distribution: model trained on 2020+ only |
+| Carlton, Richmond | FLAGGED | Unusual player profiles under-represented in training |
+
+**Total flagged: 5 groups across 27 tested**
+
+**Recommended mitigations:** Re-weight Forward/Midfield training samples · Add era indicator features (`Post666`) · Re-audit after next retraining
 
 ---
 
