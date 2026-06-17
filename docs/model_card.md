@@ -73,7 +73,7 @@ Decision support for AFL coaching departments:
 | **RMSE** | **0.6262 goals** | |
 | Mean actual goals | 0.51 | Low baseline — most players score 0 or 1 goals per game |
 
-*Evaluated on chronological 20% holdout of the full 2012-2025 dataset (≈2018–2025, n=25,424). Metrics computed 2026-06-16 directly from `models/xgb_goal_model.pkl`. (An earlier version of this doc briefly used different figures, R²=0.4883/MAE=0.4174/n=10,965, based on an assumption that the model was trained only on 2020-2025 data. That assumption did not hold up — see the Training Data note above — so these figures, matching the full dataset, are correct.)*
+*Evaluated on chronological 20% holdout of the full 2012-2025 dataset (≈2018–2025, n=25,424).*
 
 ### Prediction Range by Position Profile
 
