@@ -1,5 +1,5 @@
 """
-Fairness audit for AFL Player Performance Predictor.
+Fairness audit script for AFL Player Performance Predictor.
 Evaluates predictive parity across position, age segment, era, and team groups.
 
 Outputs:

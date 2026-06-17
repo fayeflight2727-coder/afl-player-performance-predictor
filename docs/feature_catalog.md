@@ -1,7 +1,7 @@
 # Feature Catalog
 
 **Project:** AFL Player Performance Predictor
-**Source:** `src/features/build_features.py` (Faye Wu) + causal analysis results from Course 1
+**Source:** `src/features/build_features.py` + causal analysis results from Course 1
 
 ---
 

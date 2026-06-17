@@ -138,4 +138,4 @@ If disparities are found, the following mitigations are evaluated in order:
 
 - SHAP: Lundberg & Lee, "A Unified Approach to Interpreting Model Predictions" (2017)
 - Fairness definitions: Barocas, Hardt & Narayanan, *Fairness and Machine Learning* (2019)
-- HTE/ATE results: Course 1 causal analysis findings (Height/Weight/BMI effects, 6-6-6 rule change) — produced in the separate Course 1 project, not included in this repository. Summarized in `docs/model_card.md` and `docs/presentation_draft.md`.
+- HTE/ATE results: Course 1 causal analysis findings (Height/Weight/BMI effects, 6-6-6 rule change), which were produced in the separate Course 1 project, not included in this repository. Summarized in `docs/model_card.md`.

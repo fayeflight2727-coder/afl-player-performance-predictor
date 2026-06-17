@@ -1,8 +1,6 @@
 # Fairness Audit Report
 
 **Project:** AFL Player Performance Predictor
-**Author:** Tia Qiu (ML Analyst/PM)
-**Date:** 2026-06-16
 **Model:** XGBRegressor — `models/xgb_goal_model.pkl` (trained on full 2012–2025 dataset)
 **Framework:** `docs/fairness_audit_framework.md`
 
