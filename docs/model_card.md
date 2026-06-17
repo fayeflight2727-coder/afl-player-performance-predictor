@@ -105,8 +105,8 @@ Feature importances below are from the Course 1 causal analysis (LassoCV coeffic
 |----------|-------------|-------------|-------|
 | Forward | `MarksInside50` | +9.75 | Dominant predictor of goal scoring |
 | Forward | `Disposals` | positive | Volume contributor |
-| Midfield | `Disposals` | +2.54 | Primary driver of clearances |
-| Midfield | `Marks` | negative | Efficiency over volume matters |
+| Midfield | `Disposals` | +2.54 | Primary driver of clearances (Course 1 Midfield→Clearances model; production model predicts Goals) |
+| Midfield | `Marks` | negative | Efficiency over volume matters (same caveat) |
 
 For live XGBoost SHAP values on any prediction, call `POST /predict/explain` — returns top 10 features by |SHAP| impact.
 
@@ -127,7 +127,7 @@ Based on HTE analysis from Course 1:
 - [x] Position-group performance parity audit — 2 flagged (Forward MAE 1.40×, Midfield R² gap 0.23)
 - [x] Team-group performance parity audit — 2 flagged (Carlton, Richmond)
 - [x] Age-segment performance parity audit — all PASS (Young, Prime, Veteran)
-- [x] Rule-change era audit — Pre-6-6-6 era flagged (MAE ratio 1.21×, statistically significant) — consistent with this model mixing pre- and post-rule-change data without era indicator features
+- [x] Rule-change era audit — Pre-6-6-6 era flagged (R² gap = 0.157, triggered flag; MAE ratio = 1.21× is below the 1.3× threshold; n=568, treat as monitoring signal) — consistent with model mixing pre/post-rule-change data without era indicator features
 - [ ] Bias mitigation (position re-weighting, era indicator features) — future work
 
 See `reports/fairness_report.md` for full results and `docs/fairness_audit_framework.md` for methodology.
