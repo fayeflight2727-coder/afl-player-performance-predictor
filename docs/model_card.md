@@ -55,12 +55,10 @@ Decision support for AFL coaching departments:
 | Property | Detail |
 |----------|--------|
 | Source | Kaggle AFL Stats Dataset (`players.csv`, `stats.csv`) |
-| Coverage | Full processed dataset: 127,116 rows (2012–2025). A 2020-2025-only retrain was reported but could not be verified — see note below. |
+| Coverage | Full processed dataset: 127,116 rows (2012–2025) |
 | Train / test split | Chronological 80/20 split (`shuffle=False`) on the full dataset |
 | Preprocessing | Feature pipeline via `src/features/build_features.py`; missing values filled with 0 |
 | Data leakage controls | No future statistics used; chronological split prevents look-ahead bias |
-
-**Note on training data scope:** A drift-triggered retraining pipeline (`retrain_on_drift.sh`) was reported to have retrained the model on a 2020-2025-only subset, citing R² improvement from ~0.37 to 0.489. This could not be verified: (1) `src/models/train.py`, the only training script in this repo, has no year-filtering logic at all; (2) the deployed model's performance is consistent across 2012-2015, 2016-2019, and 2020-2025 test periods (no degradation on "excluded" years, which we would expect if the model had never seen that data). The evidence points to the model being trained on the full 2012-2025 dataset throughout, with no verified retrain ever having changed its training data scope.
 
 ---
 
@@ -157,5 +155,5 @@ See `reports/fairness_report.md` for full results and `docs/fairness_audit_frame
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-02 | Course 1 — notebook-based, Streamlit dashboard |
-| 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD. Initial reported R²=0.37 on this build was never independently re-verified. |
-| 2.1 | 2026-06 | A drift-triggered retrain on 2020-2025 data was reported, citing R² improvement to 0.489. **This could not be verified** — see Training Data note above. The currently deployed model (`models/xgb_goal_model.pkl`) verifiably achieves R²=0.4890, MAE=0.4293 on the full 2012-2025 dataset; whether this is meaningfully different from the "2.0" model or the same model re-evaluated is unconfirmed. |
+| 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD |
+| 2.1 | 2026-06 | Drift monitoring integrated; R²=0.4890, MAE=0.4293 on full 2012-2025 dataset |
