@@ -145,8 +145,24 @@ See `reports/fairness_report.md` for full results and `docs/fairness_audit_frame
 - **Serving:** FastAPI via Docker container
 - **Registry:** MLflow Model Registry (staging → production)
 - **Endpoint:** `POST /predict` — see `src/api/main.py`
-- **Monitoring:** Feature drift checked daily via `src/monitoring/drift.py`
-- **Retraining trigger:** PSI > 0.25 on key features OR R² drops below threshold on recent matches
+- **Monitoring:** Feature drift checked weekly via `src/monitoring/drift.py` (PSI-based); Slack/email alerts on detection
+- **Retraining trigger:** PSI > 0.1 → alert team, schedule review; PSI > 0.2 → auto-trigger retraining pipeline
+
+### Current Drift Status
+
+| Feature | PSI Score | Status | Severity |
+|---------|-----------|--------|----------|
+| BMI | 0.327 | DRIFT | High |
+| Weight | 0.148 | DRIFT | Moderate |
+| Height | 0.012 | Stable | Low |
+| Age | 0.030 | Stable | Low |
+| Disposals | 0.014 | Stable | Low |
+| Clearances | 0.003 | Stable | Low |
+| Marks | 0.003 | Stable | Low |
+| Tackles | 0.012 | Stable | Low |
+| Inside50s | 0.001 | Stable | Low |
+
+BMI and Weight drift is attributed to players getting heavier over time, consistent with AFL rotation cap changes reducing weight disadvantage. A retraining validation was run comparing the full dataset model (R²=0.489) against a recent-data-only model (2020–2025, R²=0.481): goal prediction performance did not degrade, so the full-dataset model is retained as the production deployment.
 
 ---
 
@@ -156,4 +172,4 @@ See `reports/fairness_report.md` for full results and `docs/fairness_audit_frame
 |---------|------|---------|
 | 1.0 | 2026-02 | Course 1 — notebook-based, Streamlit dashboard |
 | 2.0 | 2026-06 | Production refactor — FastAPI, MLflow, SHAP, CI/CD |
-| 2.1 | 2026-06 | Drift monitoring integrated; R²=0.4890, MAE=0.4293 on full 2012-2025 dataset |
+| 2.1 | 2026-06 | Drift monitoring integrated (weekly PSI); BMI/Weight drift detected but goal prediction stable — full 2012-2025 model retained (R²=0.489 vs 0.481 on recent-only retrain) |
