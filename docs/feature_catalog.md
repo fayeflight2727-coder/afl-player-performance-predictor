@@ -14,7 +14,7 @@ This catalog documents every feature in the production pipeline. It is intended 
 
 **Pipeline file:** `src/features/build_features.py`
 **Output dataset:** `data/processed/afl_features_latest.csv`
-**Scaler:** `RobustScaler` (handles outliers better than StandardScaler; applied per position)
+**Scaler:** None applied in the main pipeline — XGBoost does not require feature scaling. (`RobustScaler` exists in `get_position_scaling_pipeline()` but that is a Course 1 legacy function not called by `run_full_pipeline()`.)
 
 ---
 
@@ -50,6 +50,8 @@ Standardized in `AFLDataPreprocessor.finalize_player_positions()`.
 | `PrimaryPosition` | Categorical | **Ruck-Priority rule:** any multi-position listing containing "Ruck" → `Ruck`; otherwise take first listed position. Players with no position are excluded. |
 
 Values: `Forward`, `Midfield`, `Ruck`, `Defender`
+
+**Note:** `PrimaryPosition` is **not** in `train.py`'s `FEATURES` list and is not a model input. It is used for: fairness audit grouping (`fairness_audit.py`), and as the optional `position` query parameter in `POST /predict/explain`. The model learns positional patterns implicitly from the in-game statistics.
 
 ---
 
@@ -122,18 +124,25 @@ These are per-game statistics from `stats.csv`. The following columns were **exp
 
 ---
 
-## 7. Planned Features (Not Yet Implemented)
+## 7. Computed but Not Used by Production Model
 
-These features are referenced in the role assignment and Course 1 findings but are not yet in `build_features.py`. They are planned for a future commit.
+These features are computed by `build_features.py` and exist in `afl_features_latest.csv`, but are **not included in `train.py`'s `FEATURES` list** and therefore do not affect the current model. They are candidates for a future model iteration.
 
-| Feature | File | Status |
-|---------|------|--------|
-| `IsHome` | `build_features.py` | Not yet derived — game merge brings `AwayTeam` but `IsHome` is not computed from it |
-| `TeamQuality` | `build_features.py` | Not yet implemented |
-| `Post666`, `PostStand`, `RotEra_medium`, `RotEra_low` | `build_features.py` | Era indicators from Course 1 not yet added |
-| `BMISquared`, `AgeSquared` | `build_features.py` | Nonlinear terms from Course 1 not yet added |
-| `Height_x_Ruck`, `Weight_x_Midfield`, etc. | `src/features/causal_interactions.py` | File does not exist yet |
-| `Disposals_lag3/5`, `Total_Score_lag3/5`, `Form_trend` | `build_features.py` | Lag/rolling features not yet implemented |
+| Feature | Computed in | Status |
+|---------|-------------|--------|
+| `Disposals_lag3`, `Marks_lag3`, `Tackles_lag3`, `Clearances_lag3` | `add_lag_features()` | In CSV, not in train.py FEATURES |
+| `height_x_ruck`, `weight_x_midfield`, `bmi_x_forward` | `add_causal_interactions()` | In CSV, not in train.py FEATURES |
+| `height_x_rain`, `weight_x_rain`, `bmi_x_rain` | `add_causal_interactions()` | In CSV, not in train.py FEATURES |
+| `Total_Score` | `merge_datasets()` | Course 1 target (Goals×6 + Behinds); in CSV but production model uses `Goals` |
+
+**Planned but not yet implemented in `build_features.py`:**
+
+| Feature | Notes |
+|---------|-------|
+| `IsHome` | `AwayTeam` is available post-merge but `IsHome` is not derived |
+| `TeamQuality` | Not yet implemented |
+| `Post666`, `RotEra_low`, `RotEra_medium` | Era indicators from Course 1; recommended next step to address Pre-6-6-6 fairness flag |
+| `BMISquared`, `AgeSquared` | Nonlinear terms from Course 1 notebook |
 
 ---
 
