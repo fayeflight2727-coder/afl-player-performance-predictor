@@ -86,7 +86,23 @@ Each component is independently deployable, version-controlled, and observable.
 
 ---
 
-## SLIDE 6 — Feature Engineering
+## SLIDE 6 — Position Profiles
+**Model handles all 4 positions without explicit routing**
+
+| Position | Predicted Goals | Key Driver |
+|----------|-----------------|------------|
+| Forward | 2.14 | High MarksInside50 |
+| Midfield | 0.53 | High Clearances |
+| Ruck | 0.22 | High HitOuts |
+| Defender | 0.05 | High Rebounds |
+
+The model implicitly learns positional patterns from the statistics themselves — no position-specific routing needed.
+
+These 4 profiles motivate the feature choices: the features that distinguish positions (MarksInside50, HitOuts, Clearances, Rebounds) are also the strongest predictors of goals within each position.
+
+---
+
+## SLIDE 7 — Feature Engineering
 **24 production features across 4 categories**
 
 | Category | Features |
@@ -102,7 +118,7 @@ Each component is independently deployable, version-controlled, and observable.
 
 ---
 
-## SLIDE 7 — Feature Engineering (Continued)
+## SLIDE 8 — Feature Engineering (Continued)
 **Causal-informed feature construction**
 - Age × position interaction terms from Course 1 HTE analysis inform which feature combinations to monitor
 - No explicit era indicator feature yet — model trains on the full 2012–2025 dataset, spanning both pre- and post-6-6-6 rule eras (see Fairness Audit, slide 19, for the resulting Pre-6-6-6 fairness flag)
@@ -114,7 +130,7 @@ Each component is independently deployable, version-controlled, and observable.
 
 ---
 
-## SLIDE 8 — Model Training
+## SLIDE 9 — Model Training
 **Algorithm:** XGBRegressor (XGBoost gradient boosting)
 
 | Hyperparameter | Value |
@@ -133,7 +149,7 @@ Each component is independently deployable, version-controlled, and observable.
 
 ---
 
-## SLIDE 9 — AutoML & Hyperparameter Tuning
+## SLIDE 10 — AutoML & Hyperparameter Tuning
 **Hyperparameter search via Optuna / Hyperopt**
 
 - Search space: n_estimators [100–500], max_depth [3–8], learning_rate [0.01–0.2], subsample [0.6–1.0]
@@ -152,7 +168,7 @@ A drift-triggered retrain on a 2020-2025-only subset was reported (with a claime
 
 ---
 
-## SLIDE 10 — MLflow Experiment Tracking
+## SLIDE 11 — MLflow Experiment Tracking
 **Reproducibility and model governance**
 
 - Experiment: `AFL_Goal_Prediction`
@@ -163,7 +179,7 @@ A drift-triggered retrain on a 2020-2025-only subset was reported (with a claime
 
 ---
 
-## SLIDE 11 — Explainability: What is SHAP?
+## SLIDE 12 — Explainability: What is SHAP?
 **SHAP (SHapley Additive exPlanations)**
 
 For any single prediction:
@@ -181,7 +197,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 ---
 
-## SLIDE 12 — Explainability: Forward Example
+## SLIDE 13 — Explainability: Forward Example
 **POST /predict/explain — Forward profile (22 disposals, 3 MarksInside50, 85% played)**
 
 | Feature | SHAP Value | Direction |
@@ -198,7 +214,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 ---
 
-## SLIDE 13 — API & Deployment
+## SLIDE 14 — API & Deployment
 **FastAPI — 3 production endpoints**
 
 | Endpoint | Method | Purpose |
@@ -219,7 +235,7 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 ---
 
-## SLIDE 14 — Explainability: Live API
+## SLIDE 15 — Explainability: Live API
 **Endpoint: POST /predict/explain**
 
 ```json
@@ -240,20 +256,6 @@ predicted_goals = baseline + SHAP(MarksInside50) + SHAP(Disposals) + ... + SHAP(
 
 Available for all 4 position profiles.
 41 smoke tests verify endpoint correctness and SHAP non-zero values.
-
----
-
-## SLIDE 15 — API & Deployment (Position Profiles)
-**Model handles all 4 positions without explicit routing**
-
-| Position | Predicted Goals | Key Driver |
-|----------|-----------------|------------|
-| Forward | 2.14 | High MarksInside50 |
-| Midfield | 0.53 | High Clearances |
-| Ruck | 0.22 | High HitOuts |
-| Defender | 0.05 | High Rebounds |
-
-The model implicitly learns positional patterns from the statistics themselves — no position-specific routing needed.
 
 ---
 
