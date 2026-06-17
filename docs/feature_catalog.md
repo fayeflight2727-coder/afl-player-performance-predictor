@@ -85,13 +85,12 @@ These are per-game statistics from `stats.csv`. The following columns were **exp
 |---------|------|-------------|
 | `Disposals` | Continuous | Total kicks + handballs (Kicks and Handballs dropped; this is their sum) |
 | `Marks` | Continuous | Contested + uncontested marks |
-| `Goals` | Continuous | Goals scored in the match |
 | `Behinds` | Continuous | Behinds scored in the match |
-| `HitOuts` | Continuous | Hitouts from ruck contests (target for Ruck model; feature for others) |
+| `HitOuts` | Continuous | Hitouts from ruck contests |
 | `Tackles` | Continuous | Defensive tackles |
-| `Rebounds` | Continuous | Defensive rebounds (target for Defender model; feature for others) |
+| `Rebounds` | Continuous | Defensive rebounds |
 | `Inside50s` | Continuous | Times player moved ball inside 50m arc |
-| `Clearances` | Continuous | Clearances from stoppages (target for Midfield model; feature for others) |
+| `Clearances` | Continuous | Clearances from stoppages |
 | `Clangers` | Continuous | Errors / turnovers |
 | `Frees` | Continuous | Free kicks won |
 | `FreesAgainst` | Continuous | Free kicks conceded |
@@ -103,14 +102,15 @@ These are per-game statistics from `stats.csv`. The following columns were **exp
 
 ---
 
-## 5. Target Variables (by Position Model)
+## 5. Target Variable
 
-| Position Model | Target Column | Description |
-|---------------|---------------|-------------|
-| Forward | `Total_Score` | `Goals × 6 + Behinds × 1` — computed in `merge_datasets()` |
-| Midfield | `Clearances` | Clearances from stoppages |
-| Ruck | `HitOuts` | Hitouts from ruck contests |
-| Defender | `Rebounds` | Defensive rebounds |
+| Model | Target Column | Description |
+|-------|---------------|-------------|
+| Single XGBRegressor (all positions) | `Goals` | Goals scored per player per game |
+
+`Goals` is excluded from the input feature set to prevent data leakage. The model learns positional patterns implicitly from the statistics (e.g. high `MarksInside50` → Forward, high `HitOuts` → Ruck) without explicit position routing.
+
+**Note:** Course 1 used position-specific models with different targets (`Total_Score` for Forward, `Clearances` for Midfield, `HitOuts` for Ruck, `Rebounds` for Defender). The production model (Course 2) consolidates these into a single model predicting `Goals` for all positions.
 
 ---
 

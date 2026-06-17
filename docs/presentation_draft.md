@@ -361,41 +361,26 @@ Current status: **Feature drift only (Weight, moderate)**. No concept or target 
 
 ---
 
-## SLIDE 22 — Business Value: KPIs Met
-**What we set out to deliver vs what we achieved**
+## SLIDE 22 — Business Value
+**From match statistics to coaching decisions**
 
-| KPI | Target | Achieved |
-|-----|--------|----------|
-| Model R² | ≥ 0.40 | **0.4890** ✓ |
-| API latency | < 200ms | < 200ms ✓ |
-| Test suite | ≥ 80% pass rate | 41/41 (100%) ✓ |
-| Explainability | Per-prediction SHAP | Live endpoint ✓ |
-| Fairness audit | All groups evaluated | 27 groups tested ✓ |
-| Drift monitoring | PSI/KS live | Live endpoint ✓ |
-| CI/CD | Automated on PR | GitHub Actions ✓ |
+| Decision | Without the system | With the system |
+|----------|--------------------|-----------------|
+| Forward line selection | Coach intuition + scout reports | `/predict` ranks shortlisted players by predicted goals |
+| Keep or sub a player | Disposal count as proxy | SHAP shows if MarksInside50 is high → keep on field despite low disposals |
+| Defensive assignments | General scouting | `/predict` profiles opponent key Forwards → quantified threat level |
+| Recruitment targeting | Expensive scouts, gut feel | Score draft prospects on historical stats → surface undervalued young Forwards |
 
----
+**What makes this different from a black-box score:**
+- Every prediction comes with a SHAP breakdown — coaches know *why*, not just *what*
+- Fairness audit confirms the model treats all positions and teams equitably — no hidden bias in selection recommendations
+- Drift monitoring flags when player population shifts, so coaches know when to trust the model less
 
-## SLIDE 23 — Business Value: Coaching Use Cases
-**Turning model output into coaching decisions**
-
-**Pre-game selection:**
-- Run /predict for shortlisted players → rank by predicted goals → inform Forward line selection
-
-**In-game substitution:**
-- If a Forward has high MarksInside50 SHAP → keep on field even if disposal count is low
-
-**Opponent analysis:**
-- Profile opposing team's key Forwards → predict their goal output → design defensive assignments
-
-**Recruitment:**
-- Score draft prospects on historical stats → identify undervalued young Forwards with high MarksInside50
-
-**Model tells you the what and the why — coaches decide what to do with it.**
+**The model handles the pattern recognition. Coaches make the call.**
 
 ---
 
-## SLIDE 24 — Lessons Learned & Next Steps
+## SLIDE 23 — Lessons Learned & Next Steps
 **What we learned building a production ML system**
 
 | Lesson | Detail |

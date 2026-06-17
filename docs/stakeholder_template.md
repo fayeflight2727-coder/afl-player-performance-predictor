@@ -34,8 +34,8 @@ Team: Tracy Chan (Backend), Yanxin Li (ML Engineer), [Member B] (Data Engineer),
 ### Key Metrics This Week
 | Metric | Last Week | This Week | Target |
 |--------|-----------|-----------|--------|
-| Model R² (Forward) | — | — | ≥ 0.55 |
-| Model R² (Midfield) | — | — | ≥ 0.57 |
+| Model R² (overall) | — | — | ≥ 0.40 |
+| MAE (overall) | — | — | ≤ 0.50 |
 | Test coverage | — | — | ≥ 80% |
 | Open GitHub issues | — | — | 0 critical |
 
@@ -124,9 +124,9 @@ What needs to be done and why.
 - Tech stack: FastAPI, Docker, MLflow, GitHub Actions, XGBoost, SHAP
 
 **Slides 7–8 — Feature Engineering**
-- 24 production features: physical, positional, weather, in-game stats
-- Key decisions: Disposals = Kicks + Handballs (avoid multicollinearity), %Played retained
-- Lag features, causal interaction terms (height×ruck, weight×midfield)
+- 24 production features: physical, weather, in-game stats (see feature_catalog.md)
+- Key decisions: Disposals = Kicks + Handballs (avoid multicollinearity), %Played retained, Goals excluded (target)
+- Lag features and causal interaction terms planned but not yet in production pipeline
 
 **Slides 9–11 — Model Training & AutoML**
 - XGBRegressor, n_estimators=300, max_depth=5, lr=0.05
@@ -136,7 +136,7 @@ What needs to be done and why.
 
 **Slides 11–12 — Explainability (SHAP)**
 - Slide 11: What is SHAP — baseline vs. prediction, push/pull of features
-- Slide 12: Forward example — MarksInside50 adds +1.75 goals (dominant feature, confirms Course 1 coeff +9.75)
+- Slide 12: Forward example — MarksInside50 adds +1.567 goals (dominant feature, confirms Course 1 coeff +9.75); baseline = 0.5557 (TreeExplainer)
 
 **Slides 13–15 — API & Deployment**
 - Slide 13: FastAPI endpoints — POST /predict, POST /predict/explain, GET /monitoring/drift
@@ -153,16 +153,16 @@ What needs to be done and why.
 
 **Slides 18–19 — Fairness & Ethical AI**
 - Slide 18: Audit methodology — 4 groups (position, age, era, team), thresholds MAE ratio >1.3×, R² gap >0.10. Test set is the full dataset's chronological 20% holdout (n=25,424).
-- Slide 19: Results — 5 flagged groups: Forward (MAE 1.40×), Midfield (R² gap 0.23), Pre-6-6-6 era (MAE ratio 1.21×), Carlton, Richmond. Age segments and Ruck/Defender all PASS. Recommended mitigations.
+- Slide 19: Results — 5 flagged groups: Forward (MAE 1.40×), Midfield (R² gap 0.23), Pre-6-6-6 era (R² gap 0.157, n=568 — monitoring signal not confirmed disparity), Carlton, Richmond. Age segments and Ruck/Defender all PASS.
 
 **Slides 20–21 — Monitoring & Drift**
 - PSI/KS tests on 9 features comparing train (≤2022) vs current (2023–2025)
 - Weight drift detected (PSI=0.148, moderate) — players getting lighter in modern game
 - Retraining trigger: PSI > 0.25 OR R² drops below threshold
 
-**Slides 22–23 — Business Value & Impact**
-- Slide 22: KPIs met — API latency <200ms, 41 tests passing, drift monitoring live
-- Slide 23: Coaching use cases — pre-game selection, opponent analysis, recruitment. Model predicts 2.14 goals for active Forward vs 0.05 for Defender (position awareness without explicit routing)
+**Slide 22 — Business Value**
+- "Without vs With" comparison: coach intuition → /predict ranks players by predicted goals; disposal count proxy → SHAP shows MarksInside50 as real driver; scouting → /predict profiles opponent threats; expensive scouts → score prospects on historical stats
+- Key differentiator: every prediction comes with SHAP breakdown (why, not just what); fairness audit confirms equitable treatment; drift monitoring flags when to trust model less
 
 **Slide 24 — Lessons Learned & Next Steps**
 - Lessons: column order bugs matter in production, background dataset required for SHAP, chronological splits critical for sports data
