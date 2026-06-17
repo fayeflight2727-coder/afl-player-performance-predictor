@@ -53,7 +53,15 @@ Values: `Forward`, `Midfield`, `Ruck`, `Defender`
 
 ---
 
-## 3. Weather Features
+## 3. Season Feature
+
+| Feature | Type | Description |
+|---------|------|-------------|
+| `Year` | Continuous | Season year — allows the model to capture long-term trends in AFL scoring patterns across seasons (2012–2025) |
+
+---
+
+## 4. Weather Features
 
 Derived in `AFLDataPreprocessor.refine_weather_features()` from `games.csv`. Rows missing weather data are dropped before merging.
 
@@ -65,7 +73,7 @@ Derived in `AFLDataPreprocessor.refine_weather_features()` from `games.csv`. Row
 
 ---
 
-## 4. In-Game Performance Features
+## 5. In-Game Performance Features
 
 These are per-game statistics from `stats.csv`. The following columns were **explicitly removed** from the pipeline as redundant, leaky, or uninformative:
 
@@ -102,7 +110,7 @@ These are per-game statistics from `stats.csv`. The following columns were **exp
 
 ---
 
-## 5. Target Variable
+## 6. Target Variable
 
 | Model | Target Column | Description |
 |-------|---------------|-------------|
@@ -114,7 +122,7 @@ These are per-game statistics from `stats.csv`. The following columns were **exp
 
 ---
 
-## 6. Planned Features (Not Yet Implemented)
+## 7. Planned Features (Not Yet Implemented)
 
 These features are referenced in the role assignment and Course 1 findings but are not yet in `build_features.py`. They are planned for a future commit.
 
@@ -129,7 +137,7 @@ These features are referenced in the role assignment and Course 1 findings but a
 
 ---
 
-## 7. Data Quality Outputs
+## 8. Data Quality Outputs
 
 `build_features.py` automatically saves three quality reports to `reports/data_quality/`:
 
