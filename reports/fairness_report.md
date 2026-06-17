@@ -77,7 +77,7 @@ All three age segments — including Veteran, which has too few rows for the for
 ![Rule-change era comparison](figures/fairness/era_comparison.png)
 
 **Findings:**
-- **Pre-6-6-6 (<2019)** flagged: MAE ratio=1.21× — statistically significant (p=0.0059).
+- **Pre-6-6-6 (<2019)** flagged: R² gap=0.157 (triggered flag; MAE ratio=1.21× is below the 1.3× threshold) — statistically significant (p=0.0059). Note: n=568, all from ~2018 due to chronological split — treat as monitoring signal, not confirmed disparity.
 
 ---
 
@@ -117,10 +117,10 @@ Full team results in `reports/fairness_metrics.csv`.
 
 Based on flagged groups:
 
-1. **Re-weight training samples** for flagged position/age groups
-2. **Add age×position interaction features** if young-player error persists
-3. **Add era indicator features** (`Post666`, `RotEra`) to explicitly model rule-change effects
-4. **Re-run audit** after any mitigation to verify improvement
+1. **Re-weight training samples** for Forward and Midfield groups to reduce position-based error gap
+2. **Add era indicator feature** (`Post666`) so the model can explicitly account for the 6-6-6 rule change rather than learning a blended pre/post pattern
+3. **Re-audit with stratified era sampling** after retraining to get a more representative pre-2019 test sample
+4. **Re-run full audit** after any mitigation to verify improvement
 
 ---
 

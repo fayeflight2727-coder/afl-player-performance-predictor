@@ -46,7 +46,7 @@ Pre- vs. post-rule-change predictions should be validated separately, since the 
 | Pre-6-6-6 | Before 2019 |
 | Post-6-6-6 | 2019 onwards |
 
-**Current status: active and flagged.** The production model is trained on the full 2012-2025 dataset (a reported 2020+-only retrain could not be verified — see `docs/model_card.md`), so this dimension is fully testable. The Pre-6-6-6 group is currently flagged (MAE ratio 1.21×, statistically significant), consistent with the model mixing pre- and post-rule-change data without an explicit era indicator feature.
+**Current status: active and flagged.** The production model is trained on the full 2012-2025 dataset (a reported 2020+-only retrain could not be verified — see `docs/model_card.md`), so this dimension is fully testable. The Pre-6-6-6 group is currently flagged (R² gap = 0.157 > 0.10 threshold; MAE ratio = 1.21× is below the 1.3× threshold and did not trigger the flag). Note: n=568 for Pre-6-6-6 in the test set — all from ~2018 due to chronological split — so this result should be treated as a monitoring signal rather than a confirmed disparity.
 
 ---
 
