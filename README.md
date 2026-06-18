@@ -276,6 +276,3 @@ This project builds on our Course 1 causal analysis:
 - `stats.csv`: Per-game match statistics (disposals, marks, goals, etc.)
 - Coverage: 2012–2025, men's senior AFL
 
----
-
-*McGill University MMA8 · INSY 684 · For educational purposes*
