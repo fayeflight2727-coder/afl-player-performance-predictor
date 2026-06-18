@@ -193,7 +193,6 @@ afl-player-performance-predictor/
 │   ├── model_card.md
 │   ├── fairness_audit_framework.md
 │   ├── data_pipeline.md
-│   └── presentation_draft.md
 │
 ├── models/
 │   └── xgb_goal_model.pkl           # Trained XGBoost model
