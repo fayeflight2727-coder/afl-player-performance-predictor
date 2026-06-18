@@ -9,7 +9,7 @@
 
 ## Overview
 
-The AFL Prediction API accepts per-game player statistics and returns a predicted goal output for that player. The model (v2) was retrained on AFL data from 2020–2025 using a chronological 80/20 split.
+The AFL Prediction API accepts per-game player statistics and returns a predicted goal output for that player. The model is trained on AFL data from 2012–2025 using a chronological 80/20 split.
 
 All endpoints return JSON. Predictions are regression outputs (continuous float), not classification probabilities.
 
@@ -158,14 +158,6 @@ curl -X POST http://localhost:8000/predict \
 
 ---
 
-### POST /predict/batch
-
-**Status:** Not yet implemented (returns `501 Not Implemented`)
-
-Planned to accept an array of `PlayerInput` objects and return predictions for all in a single request.
-
----
-
 ### POST /predict/explain
 
 Returns a SHAP-based explanation for a single player prediction. Accepts the same 24-feature body as `/predict`, plus an optional `position` query parameter.
@@ -207,7 +199,7 @@ Request body is identical to `POST /predict` (see schema above).
 
 **How to read this:** `baseline` (0.5557) is the model's expected output averaged over the training set, as computed by SHAP TreeExplainer from the trained tree structure. Each `shap_value` shows how much that feature pushes the prediction above or below baseline. Here `MarksInside50=3` adds +1.567 goals — the dominant driver for this Forward, consistent with Course 1 findings (coefficient +9.75). `baseline + sum(shap_values) ≈ prediction`.
 
-**Explainer:** Uses SHAP `TreeExplainer`, which computes exact (not approximated) Shapley values directly from the model's tree structure — no background dataset is needed for the baseline itself. A 50-row sample from training data (Year ≤ 2022) is still passed through for interface compatibility but is not used by TreeExplainer's calculation.
+**Explainer:** Uses SHAP `TreeExplainer`, which computes exact (not approximated) Shapley values directly from the model's tree structure. A 50-row sample from training data (Year ≤ 2022) is passed as the background dataset — TreeExplainer uses this to compute the baseline E[f(X)] = 0.5557, the model's average prediction over the training distribution.
 
 **Implemented in:** `src/visualization/explainability.py` → `generate_explanation_dict()`
 
@@ -227,10 +219,10 @@ GET /monitoring/drift
 {
   "timestamp": "2026-06-14T19:41:55",
   "drift_results": {
+    "BMI":    {"psi": 0.327, "drift_detected": true,  "severity": "high"},
     "Weight": {"psi": 0.148, "drift_detected": true,  "severity": "moderate"},
-    "BMI":    {"psi": 0.091, "drift_detected": false,  "severity": "low"},
-    "Height": {"psi": 0.012, "drift_detected": false,  "severity": "low"},
-    "Age":    {"psi": 0.034, "drift_detected": false,  "severity": "low"}
+    "Height": {"psi": 0.012, "drift_detected": false, "severity": "low"},
+    "Age":    {"psi": 0.030, "drift_detected": false, "severity": "low"}
   }
 }
 ```
@@ -256,7 +248,7 @@ Features monitored: `Height`, `Weight`, `BMI`, `Age`, `Disposals`, `Clearances`,
 
 - **Single model**: The current API routes all positions through one XGBoost model. Position-specific routing (Forward→TotalScore, Midfield→Clearances, etc.) is planned for a future phase.
 - **`%Played` rename**: The feature pipeline uses `%Played` as the column name; the API accepts `Percent_Played` and renames it internally before passing to the model.
-- **`Goals` excluded**: `Goals` is not a model input (it is part of the Forward model's target `Total_Score = Goals×6 + Behinds`; including it would be data leakage).
+- **`Goals` excluded**: `Goals` is the target variable — including it in the input features would be data leakage.
 - **`PrimaryPosition` excluded**: Not yet a model input. Position routing is done at the application level, not feature level.
 
 ---

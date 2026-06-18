@@ -1,8 +1,8 @@
-# AFL Player Performance Predictor — Production ML System
+# AFL Player Performance Predictor
 
 > **McGill University MMA8 · INSY 684 Enterprise Data Science & ML in Production**
 
-A production-grade machine learning system that predicts goal-scoring probability and player performance for AFL (Australian Football League) players. Built on causal inference findings from Course 1, this system brings the model to production with a FastAPI serving layer, automated drift monitoring, SHAP explainability, and a full CI/CD pipeline.
+A production-grade machine learning system that predicts goals scored per player per AFL game. Built on causal inference findings from Course 1, the system serves predictions via a FastAPI REST API with SHAP-based explainability, automated drift monitoring, a fairness audit, and a full CI/CD pipeline.
 
 ---
 
@@ -15,114 +15,136 @@ A production-grade machine learning system that predicts goal-scoring probabilit
 | Faye Wu | Data Engineer | [@fayeflight2727-coder](https://github.com/fayeflight2727-coder) |
 | Tia Qiu | ML Analyst / PM | [@TiaQiu1016](https://github.com/TiaQiu1016) |
 
-**GitHub Repository:** [fayeflight2727-coder/afl-player-performance-predictor](https://github.com/fayeflight2727-coder/afl-player-performance-predictor)
-
----
-
-## Project Management
-
-- **Sprint Board:** [AFL Predictor — Sprint Board](https://github.com/users/TiaQiu1016/projects/1)
-- **Issues:** [All project issues](https://github.com/fayeflight2727-coder/afl-player-performance-predictor/issues)
-
 ---
 
 ## Business Problem
 
-AFL teams make multi-million dollar decisions on player selection, recruitment, and in-game strategy — yet most decisions still rely on intuition rather than evidence. Our system gives coaching departments a data-backed decision-support tool: given a player's attributes and game context, how likely are they to score, and *why*?
+AFL clubs make multi-million dollar decisions on player selection, in-game substitution, opponent analysis, and recruitment — largely based on intuition and scout reports. This system provides a data-backed decision-support layer: given a player's match statistics and physical attributes, how many goals are they predicted to score, and why?
 
-**Core questions we answer:**
-1. What is this player's predicted performance in this game context?
-2. Which factors drive that prediction? (SHAP explainability)
-3. Is the model fair across different positions and teams?
-4. Is the model still reliable as player data drifts over time?
+**Core questions answered:**
+1. What is this player's predicted goal output for this game?
+2. Which features drove that prediction? (SHAP explainability)
+3. Is the model equally accurate across positions, ages, and teams? (Fairness audit)
+4. Is the model still reliable as player populations shift over time? (Drift monitoring)
+
+---
+
+## Model Performance
+
+| Metric | Value |
+|--------|-------|
+| Algorithm | XGBRegressor |
+| Target | Goals per player per game |
+| R² | **0.4890** |
+| MAE | **0.4293 goals** |
+| RMSE | 0.6262 goals |
+| Training data | 101,692 rows, 2012–2025 (chronological 80/20 split) |
+| Test set | 25,424 rows, 2018–2025 |
+
+**Position prediction range:**
+
+| Position | Sample Profile | Predicted Goals |
+|----------|---------------|-----------------|
+| Forward | 22 disposals, 3 MarksInside50, 85% played | 2.14 |
+| Midfield | 28 disposals, 8 clearances, 100% played | 0.53 |
+| Ruck | 18 disposals, 35 hitouts, 100% played | 0.22 |
+| Defender | 20 disposals, 8 rebounds, 100% played | 0.05 |
 
 ---
 
 ## Solution Architecture
 
 ```
-Raw Data (AFL Stats)
-        │
-        ▼
-┌─────────────────────┐
-│  Feature Pipeline   │  Great Expectations validation
-│  src/features/      │  Lag features, causal interactions
-│  (Data Engineer)    │  Feature store (SQLite)
-└────────┬────────────┘
+Raw Data (Kaggle AFL Stats)
          │
          ▼
-┌─────────────────────┐
-│  Model Training     │  Position-specific LassoCV / XGBoost
-│  src/models/        │  AutoML (Optuna/Hyperopt)
-│  (ML Engineer)      │  MLflow experiment tracking
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│  Explainability     │  SHAP force plots, waterfall charts
-│  src/visualization/ │  Global feature importance dashboard
-│  (ML Analyst)       │  Fairness audit across positions/teams
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│  API Serving        │  FastAPI  POST /predict
-│  src/api/           │  POST /predict/batch
-│  (Backend/DevOps)   │  GET /explain/{player_id}
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│  Monitoring         │  PSI / KS drift detection
-│  src/monitoring/    │  Daily automated checks
-│  (Data Engineer)    │  GitHub Actions cron
-└─────────────────────┘
+┌─────────────────────────┐
+│   Feature Pipeline      │  src/features/build_features.py
+│   24 production         │  Physical attributes, game context,
+│   features engineered   │  in-game stats, weather
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│   Model Training        │  src/models/train.py
+│   XGBRegressor          │  MLflow experiment tracking
+│   + Hyperparameter      │  Registered as AFL_Goal_Predictor
+│   Tuning (Optuna)       │  src/models/tune.py
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│   Explainability        │  src/visualization/explainability.py
+│   SHAP TreeExplainer    │  Exact SHAP values per prediction
+│   Fairness Audit        │  src/visualization/fairness_audit.py
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│   API Serving           │  src/api/main.py  (FastAPI)
+│   POST /predict         │  Goal prediction
+│   POST /predict/explain │  Prediction + SHAP breakdown
+│   GET  /monitoring/drift│  PSI drift scores
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│   Monitoring            │  src/monitoring/drift.py
+│   PSI drift detection   │  Weekly automated checks
+│   BMI: 0.327 (HIGH)     │  Retrain triggered at PSI > 0.2
+│   Weight: 0.148 (MOD)   │
+└─────────────────────────┘
 ```
 
 ---
 
-## Key Results (from Course 1 Causal Analysis)
+## Causal Findings (Course 1)
 
-These findings from our causal inference work directly inform the feature engineering and model interpretation in this production system.
+These findings from Course 1 causal analysis inform the feature choices and model interpretation.
 
 ### Average Treatment Effects (ATE)
 
-| Treatment | Position | Outcome | ATE (XGBoost) | Interpretation |
-|-----------|----------|---------|---------------|----------------|
+| Treatment | Position | Outcome | ATE | Interpretation |
+|-----------|----------|---------|-----|----------------|
 | Height | Ruck | HitOuts | **+3.66** | Taller rucks win significantly more hitouts |
 | Weight | Ruck | HitOuts | **+4.22** | Heavier rucks dominate contests |
-| BMI | Forward | TotalScore | **+0.64** | Physicality benefits all positions |
-| BMI | Midfield | Clearances | **+0.62** | Modern game rewards physicality everywhere |
-| Height | Forward | TotalScore | +0.06 | Minimal height benefit for forwards |
-| Home | Ruck | HitOuts | +0.20 | Home advantage is ruck-specific |
+| BMI | Forward | Goals | **+0.64** | Physicality benefits scoring |
 
 ### Rule Change Impact
 
-| Rule | Position | Change | Effect |
-|------|----------|--------|--------|
-| 6-6-6 (2019) | Ruck | +2,226% | Made height dramatically more valuable |
-| Rotation Caps | Midfield | −97% | Nearly eliminated weight advantage for mids |
-| Stand Rule | Midfield | ~0% | Negligible effect on clearances |
+| Rule | Effect |
+|------|--------|
+| 6-6-6 (2019) | +2,226% increase in height effect for Rucks — structurally changed positional roles |
+| Rotation Caps | −97% reduction in weight advantage for Midfielders |
 
 ### Heterogeneous Treatment Effects (HTE)
 
-Key finding: **age and career stage moderate the physical attribute advantages significantly.**
-- Young rucks (<23): Height ATE = +8.16 hitouts (strongest effect)
-- Prime forwards (23–28): Height ATE = +0.84 (positive)
-- Veteran forwards (>28): Height ATE = −0.51 (diminishing returns)
+Age moderates physical attribute effects significantly:
 
-### Predictive Model Performance
+| Segment | Height → HitOuts (Ruck) |
+|---------|------------------------|
+| Young (<23) | **+8.16** |
+| Prime (23–28) | +0.95 |
+| Veteran (>28) | −2.21 |
 
-| Position | Target | R² (Test) | MAE (Test) | Model |
-|----------|--------|-----------|------------|-------|
-| Forward | TotalScore | 0.49 | 4.37 | LassoCV |
-| Midfield | Clearances | 0.52 | 1.42 | LassoCV |
+---
 
-**Validation strategy:** Chronological split — train through 2022, validate 2023–2024, test 2025.
+## Fairness Audit
 
-**Top predictors:**
-- Forward: `MarksInside50` (coeff: +9.75), `Frees`, `Disposals`
-- Midfield: `Disposals` (coeff: +2.54), efficiency > volume
+The model was audited across 27 groups in 4 dimensions on the chronological test set (n = 25,424).
+
+| Group | Result | Key Finding |
+|-------|--------|-------------|
+| Forward | FLAGGED | MAE ratio 1.40× — harder to predict |
+| Midfield | FLAGGED | R² gap 0.23 — low explained variance |
+| Ruck | PASS | — |
+| Defender | PASS | — |
+| Age (all 3 segments) | PASS | Age parity holds |
+| Pre-6-6-6 era | FLAGGED | R² gap 0.157; n=568 — monitoring signal |
+| Carlton, Richmond | FLAGGED | Under-represented profiles |
+| 16 other teams | PASS | No significant disparity |
+
+Full results: `reports/fairness_report.md` · Methodology: `docs/fairness_audit_framework.md`
 
 ---
 
@@ -133,72 +155,74 @@ afl-player-performance-predictor/
 │
 ├── src/
 │   ├── features/
-│   │   ├── build_features.py        # Feature pipeline (Data Engineer)
-│   │   └── causal_interactions.py   # Height×Ruck, Weight×Midfield features
+│   │   ├── build_features.py        # Feature pipeline
+│   │   └── validate_for_training.py # Pre-training data validation
 │   │
 │   ├── models/
-│   │   ├── train.py                 # Production training script (ML Engineer)
-│   │   └── tune.py                  # AutoML hyperparameter tuning
+│   │   ├── train.py                 # Production training script
+│   │   └── tune.py                  # Optuna hyperparameter tuning
 │   │
 │   ├── api/
-│   │   ├── main.py                  # FastAPI application (Backend/DevOps)
+│   │   ├── main.py                  # FastAPI application
 │   │   ├── schemas.py               # Pydantic request/response schemas
-│   │   └── dependencies.py          # Model loading from MLflow registry
+│   │   └── dependencies.py          # Model loading (MLflow / local pkl)
 │   │
 │   ├── monitoring/
-│   │   └── drift.py                 # PSI/KS drift detection (Data Engineer)
+│   │   └── drift.py                 # PSI drift detection
 │   │
 │   └── visualization/
-│       └── explainability.py        # SHAP integration (ML Analyst)
+│       ├── explainability.py        # SHAP TreeExplainer integration
+│       └── fairness_audit.py        # Fairness audit across groups
 │
-├── tests/                           # Unit tests (all members)
+├── tests/
+│   ├── test_api_health.py
+│   ├── test_predict.py
+│   ├── test_explain.py
+│   └── test_explainability.py       # Unit tests (no API required)
 │
 ├── reports/
-│   └── data_quality/                # Great Expectations validation results
+│   ├── fairness_report.md
+│   ├── fairness_metrics.csv
+│   └── figures/
+│       ├── fairness/                # Fairness audit plots
+│       └── shap/                    # SHAP waterfall plots by position
 │
 ├── docs/
-│   ├── kpis_and_success_metrics.md  # Project KPIs
-│   ├── feature_catalog.md           # Feature definitions for stakeholders
-│   ├── model_card.md                # Model performance and limitations
-│   ├── fairness_audit_framework.md  # Bias audit methodology
-│   └── stakeholder_template.md      # Communication template
+│   ├── api_documentation.md
+│   ├── feature_catalog.md
+│   ├── model_card.md
+│   ├── fairness_audit_framework.md
+│   ├── data_pipeline.md
+│   └── presentation_draft.md
+│
+├── models/
+│   └── xgb_goal_model.pkl           # Trained XGBoost model
 │
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                   # Lint + unit tests on PR
+│       ├── ci.yml                   # Lint + tests on PR
 │       └── cd.yml                   # Deploy on merge to main
 │
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Makefile
 ├── pyproject.toml
-├── requirements.txt
-└── .env.example
+└── requirements.txt
 ```
 
 ---
 
-## Production Deployment
-
-### API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/predict` | Single player prediction |
-| `POST` | `/predict/batch` | Multiple players |
-| `GET`  | `/explain/{player_id}` | SHAP explanation for a prediction |
-| `GET`  | `/health` | Health check |
-| `GET`  | `/ready` | Readiness check |
+| `GET` | `/health` | Server health check |
+| `GET` | `/ready` | Model load readiness check |
+| `POST` | `/predict` | Predict goals for a player profile |
+| `POST` | `/predict/explain` | Predict + return top 10 SHAP values |
+| `GET` | `/monitoring/drift` | PSI drift scores for 9 key features |
 
-### Monitoring
-- Drift detection runs daily at 2 AM UTC
-- PSI and KS tests on incoming feature distributions
-- Alerts sent to `#ml-monitoring` Slack channel
-
-### CI/CD
-- Push to `main` triggers deployment
-- All PRs require lint + unit tests to pass
-- At least 1 code review approval required before merge
+Full request/response schemas and example curl commands: `docs/api_documentation.md`
 
 ---
 
@@ -207,73 +231,51 @@ afl-player-performance-predictor/
 ### With Docker (recommended)
 
 ```bash
-docker build -t afl-predictor .
-docker run -p 8000:8000 afl-predictor
+docker compose up
 ```
 
-Or with docker-compose (includes MLflow + monitoring services):
-
-```bash
-docker-compose up
-```
+API available at `http://localhost:8000` · Swagger UI at `http://localhost:8000/docs`
 
 ### Without Docker
 
 ```bash
-# Clone the repository
 git clone https://github.com/fayeflight2727-coder/afl-player-performance-predictor.git
 cd afl-player-performance-predictor
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Copy environment variables
-cp .env.example .env
-
-# Run the API
 uvicorn src.api.main:app --reload --port 8000
 ```
 
 ### Run Tests
 
 ```bash
-# Via Makefile
-make test
-
-# Or directly
 pytest tests/ -v
+# or
+make test
 ```
 
 ---
 
-## Branch Naming Convention
+## CI/CD
 
-```
-feature/phase{N}-{short-description}
-# e.g.
-feature/phase5-shap-explainability
-feature/phase2-feature-pipeline
-fix/model-drift-threshold
-```
+- Every pull request triggers lint (flake8) + 41 tests via GitHub Actions
+- Smoke tests skip automatically if API is not running (`@pytest.mark.skipif`)
+- Merge to main triggers Docker image rebuild and API redeployment
 
 ---
 
 ## Prior Work
 
-This project builds directly on our Course 1 project. Original analysis available at:
+This project builds on our Course 1 causal analysis:
 [fayeflight2727-coder/AFL-prediction](https://github.com/fayeflight2727-coder/AFL-prediction)
-- Completed causal inference (H1–H5) with ATE/HTE analysis
-- Predictive model with Streamlit dashboard
-- [Live Dashboard](https://team5-afl-performance-analysis.streamlit.app/)
 
 ---
 
 ## Dataset
 
 **Source:** [Kaggle AFL Stats Dataset](https://www.kaggle.com/datasets/stoney71/aflstats)
-- `players.csv`: Individual player statistics per game (kicks, handballs, marks, tackles, etc.)
-- `stats.csv`: Match outcomes, scores, venues, attendance, team-level statistics
-- Coverage: 100+ years of AFL history; primary analysis window 2012–2025
+- `players.csv`: Player physical attributes (height, weight, DOB, position)
+- `stats.csv`: Per-game match statistics (disposals, marks, goals, etc.)
+- Coverage: 2012–2025, men's senior AFL
 
 ---
 
