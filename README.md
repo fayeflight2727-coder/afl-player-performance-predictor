@@ -153,6 +153,10 @@ Full results: `reports/fairness_report.md` · Methodology: `docs/fairness_audit_
 ```
 afl-player-performance-predictor/
 │
+├── data/
+│   ├── raw/                         # Source CSVs from Kaggle (players.csv, stats.csv)
+│   └── processed/                   # afl_features_latest.csv (feature pipeline output)
+│
 ├── src/
 │   ├── features/
 │   │   ├── build_features.py        # Feature pipeline
@@ -175,6 +179,7 @@ afl-player-performance-predictor/
 │       └── fairness_audit.py        # Fairness audit across groups
 │
 ├── tests/
+│   ├── conftest.py
 │   ├── test_api_health.py
 │   ├── test_predict.py
 │   ├── test_explain.py
@@ -192,8 +197,7 @@ afl-player-performance-predictor/
 │   ├── feature_catalog.md
 │   ├── model_card.md
 │   ├── fairness_audit_framework.md
-│   ├── data_pipeline.md
-│   └── presentation_draft.md
+│   └── data_pipeline.md
 │
 ├── models/
 │   └── xgb_goal_model.pkl           # Trained XGBoost model
