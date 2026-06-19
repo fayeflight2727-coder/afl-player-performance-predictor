@@ -19,7 +19,7 @@ A production-grade machine learning system that predicts goals scored per player
 
 ## Project Management
 
-- **Sprint Board:** [AFL Predictor — Sprint Board](https://github.com/users/TiaQiu1016/projects/1)
+- **Sprint Board:** [AFL Predictor — Sprint Board](https://github.com/users/fayeflight2727-coder/projects/2/views/2)
 - **Issues:** [All project issues](https://github.com/fayeflight2727-coder/afl-player-performance-predictor/issues)
 
 ---
