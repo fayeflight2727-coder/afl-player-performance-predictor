@@ -154,7 +154,7 @@ Full results: `reports/fairness_report.md` · Methodology: `docs/fairness_audit_
 afl-player-performance-predictor/
 │
 ├── data/
-│   ├── raw/                         # Source CSVs from Kaggle (players.csv, stats.csv)
+│   ├── raw/                         # Source CSVs from Kaggle (players.csv, stats.csv, games.csv)
 │   └── processed/                   # afl_features_latest.csv (feature pipeline output)
 │
 ├── src/
@@ -188,6 +188,8 @@ afl-player-performance-predictor/
 ├── reports/
 │   ├── fairness_report.md
 │   ├── fairness_metrics.csv
+│   ├── data_quality/                # Data quality reports and column summaries
+│   ├── drift/                       # Drift detection report (drift_report.json)
 │   └── figures/
 │       ├── fairness/                # Fairness audit plots
 │       └── shap/                    # SHAP waterfall plots by position
