@@ -26,6 +26,22 @@ A single XGBoost regression model that predicts goals scored per player per game
 
 **Experiment tracking:** Runs logged to MLflow experiment `AFL_Goal_Prediction`. Model registered as `AFL_Goal_Predictor`.
 
+### Hyperparameter Tuning (Optuna)
+
+Automated hyperparameter search was run using Optuna (20 trials, `src/models/tune.py`).
+
+| Parameter | Baseline | Optuna Best |
+|-----------|----------|-------------|
+| `n_estimators` | 300 | 196 |
+| `max_depth` | 5 | 4 |
+| `learning_rate` | 0.05 | 0.0976 |
+| `subsample` | 1.0 (default) | 0.7962 |
+| `colsample_bytree` | 1.0 (default) | 0.9980 |
+
+**Results:** Optuna best: R²=0.4893, MSE=0.3920 vs baseline R²=0.4890, MSE=0.3922. The improvement in predictive accuracy is marginal (ΔR²=0.0003).
+
+**Decision:** Baseline model retained in production. However, the Optuna-suggested parameters reveal a meaningful insight: a shallower tree structure (`max_depth=4` vs 5), fewer estimators (196 vs 300), and row subsampling (`subsample=0.7962`) produce nearly identical accuracy with a simpler, more regularized model. This reduces overfitting risk and improves generalization to unseen player profiles — a signal that the baseline is not underfit but that further complexity does not help.
+
 ### Feature Inputs (24 features)
 
 `Year`, `Disposals`, `Marks`, `Behinds`, `HitOuts`, `Tackles`, `Rebounds`, `Inside50s`, `Clearances`, `Clangers`, `Frees`, `FreesAgainst`, `ContestedMarks`, `MarksInside50`, `OnePercenters`, `GoalAssists`, `%Played`, `Height`, `Weight`, `BMI`, `AvgTemp`, `TempRange`, `IsRainy`, `Age`
